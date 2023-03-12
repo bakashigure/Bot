@@ -1,0 +1,24 @@
+[tool.poetry]
+name = "sweetbot"
+version = "0.1.0"
+description = "sweetbot"
+authors = []
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10.6"
+nonebot2 = "^2.0.0-beta.1"
+
+[tool.poetry.dev-dependencies]
+nb-cli = "^0.6.0"
+
+[tool.nonebot]
+plugins = [
+    # "nonebot_plugin_gocqhttp",
+    "nonebot_plugin_apscheduler"
+]
+plugin_dirs = ["src/plugins"]
+
+[build-system]
+requires = ["poetry_core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
