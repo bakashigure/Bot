@@ -265,7 +265,7 @@ plugin_config.register_plugins({
 
     # "背日语": (65, False),
     # "搜图": (66, False),
-    # "翻译": (67, True),
+    "翻译": (67, True),
     "缩写": (68, True),
     # "Arcaea": (69, True),
 })
