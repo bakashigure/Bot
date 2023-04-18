@@ -13,6 +13,7 @@ from hmac import new
 from random import randint
 from sys import maxsize, version_info
 from time import time
+import re
 
 from aiohttp import request
 from loguru import logger
@@ -230,6 +231,7 @@ async def _(bot: Bot, event: Event, state: T_State):
     state['Source'] = 'auto'
     state['Target'] = 'zh'
     source_text = event.get_plaintext().strip()
+    source_text = re.findall('^(?:翻译|速速翻译)[:：，,\s]*(.*)', source_text)[0]
     if not source_text:
         await sudo_translate.send("请输入要翻译的内容")
     else:
