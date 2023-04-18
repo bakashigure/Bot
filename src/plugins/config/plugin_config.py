@@ -283,8 +283,8 @@ hidden_plugin_config = PluginConfig(
 )
 hidden_plugin_config.register_plugins({
     "戳一戳": (-1, True),
-    "青年大学习": (-2, False),
-    "疫情填报": (-3, False),
+    # "青年大学习": (-2, False),
+    # "疫情填报": (-3, False),
 })
 
 
