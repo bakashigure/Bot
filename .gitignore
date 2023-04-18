@@ -142,3 +142,5 @@ dmypy.json
 
 unused/
 etc.yaml
+temp.jpg
+id.yaml
