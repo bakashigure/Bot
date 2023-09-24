@@ -57,7 +57,7 @@ async def _(bot: Bot, event: MessageEvent):
         msg = '可用的命令有\n\n'
         for plugin_id, plugin_name in plugin_config.items():
             msg += '(' + str(plugin_id) + ")\t" + plugin_name + "\t" \
-                + ("已开启" if plugin_config.accessible(group_or_user_id, plugin_name) else "已关闭")[0] + "\n"
+                + ("已开启" if plugin_config.accessible(group_or_user_id, plugin_name)[0] else "已关闭") + "\n"
         msg += '\n使用 `man [名称]` 获取各个命令的详细帮助'
         msg += '\n管理者可使用 `config-modify` 直接控制开关'
         await help_matcher.send(msg)
