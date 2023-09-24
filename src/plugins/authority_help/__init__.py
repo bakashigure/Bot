@@ -175,9 +175,9 @@ async def _(bot: Bot, event: MessageEvent):
                 if ocd == "o": return 't'
                 elif ocd == "c": return 'f'
                 else: return 'd'
-            def ocd_to_output(ocd: str) -> str:
-                if ocd == "o": return '开启'
-                elif ocd == "c": return '关闭'
+            def tfd_to_output(tfd: str) -> str:
+                if tfd == "t": return '开启'
+                elif tfd == "f": return '关闭'
                 else: return '设为默认'
             to_be_accessible = ocd_to_tfd(arguments[3][0])
             if arguments[3] in ['oa', 'ca', 'da'] and len(arguments) == 4 or (len(arguments) == 5 and arguments[4] == "hidden"):
@@ -187,7 +187,7 @@ async def _(bot: Bot, event: MessageEvent):
                     await all_authority_locker.send(
                         ("群" if arguments[1] in ['g', 'group'] else "用户") +
                         f" {int(arguments[2])} 所有功能均已" +
-                        ocd_to_output(to_be_accessible)
+                        tfd_to_output(to_be_accessible)
                     )
                     await all_authority_locker.finish()
                 else:
@@ -196,7 +196,7 @@ async def _(bot: Bot, event: MessageEvent):
                     await all_authority_locker.send(
                         ("群" if arguments[1] in ['g', 'group'] else "用户") +
                         f" {int(arguments[2])} 所有隐藏功能均已" +
-                        ocd_to_output(to_be_accessible)
+                        tfd_to_output(to_be_accessible)
                     )
                     await all_authority_locker.finish()
             else:
@@ -215,7 +215,7 @@ async def _(bot: Bot, event: MessageEvent):
                     else:
                         plugin_config.change_access(group_or_user_id, plugin_name, to_be_accessible)
                         hidden_plugin_config.change_access(group_or_user_id, plugin_name, to_be_accessible)
-                        send_message += hidden_prefix + "功能 [" + plugin_name + "] 已" + ocd_to_output(to_be_accessible) + "\n"
+                        send_message += hidden_prefix + "功能 [" + plugin_name + "] 已" + tfd_to_output(to_be_accessible) + "\n"
                 await all_authority_locker.send(send_message.strip())
                 await all_authority_locker.finish()
         # wrong
