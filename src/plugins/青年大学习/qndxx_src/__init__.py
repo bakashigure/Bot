@@ -1,1 +1,0 @@
-from .qndxx import QNDXX

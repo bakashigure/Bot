@@ -1,0 +1,30 @@
+{
+    "doc": [
+        "register 中的 key 是 plugin_name，是唯一标识符，必须和你的插件文件夹名一致；",
+        "register 中的 value[0] 是 plugin_id，是面向用户的时候方便处理而造的，只要不重就行",
+        "register 中的 value[1] 是默认方式（整体分为开、关、默认三种切换状态，默认即使用 value[1]）"
+    ],
+    "file_dir_path": "./src/plugins/config/",
+    "normal": {
+        "file": {
+            "group": "normal_group.yaml",
+            "user": "normal_user.yaml"
+        },
+        "register": {
+            "help": [1, true],
+            "echo": [2, false],
+            "random": [3, true],
+            "翻译": [67, true],
+            "缩写": [68, true]
+        }
+    },
+    "hidden": {
+        "file": {
+            "group": "hidden_group.yaml",
+            "user": "hidden_user.yaml"
+        },
+        "register": {
+            "戳一戳": [-1, true]
+        }
+    }
+}

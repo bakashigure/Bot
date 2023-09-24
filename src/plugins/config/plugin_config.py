@@ -1,16 +1,15 @@
 import yaml
 import time
+import json
 
 
 class PluginConfig:
 
-    def __init__(self, group_yaml_file, user_yaml_file):
+    def __init__(self, file_dir_path, group_yaml_file, user_yaml_file):
 
         self.lock = False
-
-        _prefix = './src/plugins/config/'
-        self.group_yaml_path = _prefix + group_yaml_file
-        self.user_yaml_path = _prefix + user_yaml_file
+        self.group_yaml_path = file_dir_path + group_yaml_file
+        self.user_yaml_path = file_dir_path + user_yaml_file
 
         """
         self.plugin_name_dict = {
@@ -244,53 +243,38 @@ class PluginConfig:
 
 
 """
-plugin_name 是唯一标识符，必须和你的插件文件夹名一致
-plugin_id 仅仅是面向用户的时候方便处理而造的，只要不重就行
+所有配置都在 plugin.json 中
 """
 
+with open('./src/plugins/config/plugin.json', 'r') as plugin_file:
+    plugin_data = json.load(plugin_file)
 
-# non-hidden:
-# only group owner / admin & superuser can change permission for group
-# user can only use the default access, unless mannual granted in yaml file
-# name, id cannot be the same (cannot be the same as hidden, neither)
+    # non-hidden:
+    # only group owner / admin & superuser can change permission for group
+    # user can only use the default access, unless mannual granted in yaml file
+    # name, id cannot be the same (cannot be the same as hidden, neither)
 
-plugin_config = PluginConfig(
-    'group_config.yaml',
-    'user_config.yaml'
-)
-plugin_config.register_plugins({
-    "help": (1, True),
-    "echo": (2, True),
-    "random": (3, True),
+    plugin_config = PluginConfig(
+        plugin_data["file_dir_path"],
+        plugin_data["normal"]["file"]["group"],
+        plugin_data["normal"]["file"]["user"],
+    )
+    plugin_config.register_plugins(plugin_data["normal"]["register"])
 
-    # "背日语": (65, False),
-    # "搜图": (66, False),
-    "翻译": (67, True),
-    "缩写": (68, True),
-    # "Arcaea": (69, True),
-})
+    # hidden:
+    # only superuser can change permission for group
+    # user can only use the default access, unless mannual granted in yaml file
+    # name, id cannot be the same (cannot be the same as non-hidden, neither)
 
+    hidden_plugin_config = PluginConfig(
+        plugin_data["file_dir_path"],
+        plugin_data["hidden"]["file"]["group"],
+        plugin_data["hidden"]["file"]["user"],
+    )
+    hidden_plugin_config.register_plugins(plugin_data["hidden"]["register"])
 
-
-# hidden:
-# only superuser can change permission for group
-# user can only use the default access, unless mannual granted in yaml file
-# name, id cannot be the same (cannot be the same as non-hidden, neither)
-
-hidden_plugin_config = PluginConfig(
-    'group_hidden_config.yaml',
-    'user_hidden_config.yaml'
-)
-hidden_plugin_config.register_plugins({
-    "戳一戳": (-1, True),
-    # "青年大学习": (-2, False),
-    # "疫情填报": (-3, False),
-})
-
-
-
-# all
-all_plugin_config_list = [
-    plugin_config,
-    hidden_plugin_config,
-]
+    # all
+    all_plugin_config_list = [
+        plugin_config,
+        hidden_plugin_config,
+    ]

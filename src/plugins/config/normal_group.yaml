@@ -3,8 +3,10 @@
   help: true
   random: true
   缩写: true
+  翻译: true
 753376645:
   echo: true
   help: true
   random: true
   缩写: true
+  翻译: false
