@@ -2,7 +2,8 @@
     "doc": [
         "register 中的 key 是 plugin_name，是唯一标识符，必须和你的插件文件夹名一致；",
         "register 中的 value[0] 是 plugin_id，是面向用户的时候方便处理而造的，只要不重就行",
-        "register 中的 value[1] 是默认方式（整体分为开、关、默认三种切换状态，默认即使用 value[1]）"
+        "register 中的 value[1] 是默认方式（整体分为开、关、默认三种切换状态，默认即使用 value[1]）",
+        "此内容修改后需重启 nonebot！"
     ],
     "file_dir_path": "./src/plugins/config/",
     "normal": {
