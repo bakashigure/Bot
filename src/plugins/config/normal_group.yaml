@@ -1,12 +1,12 @@
 169909878:
-  echo: true
-  help: true
-  random: true
-  缩写: true
-  翻译: true
+  echo: d
+  help: d
+  random: d
+  缩写: t
+  翻译: t
 753376645:
-  echo: true
-  help: true
-  random: true
-  缩写: true
-  翻译: false
+  echo: d
+  help: d
+  random: d
+  缩写: t
+  翻译: f

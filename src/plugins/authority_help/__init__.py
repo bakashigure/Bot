@@ -31,7 +31,7 @@ async def _(matcher: Matcher, bot: Bot, event: Event):
         allow = True
     else:
         for i_plugin_config in all_plugin_config_list:
-            if i_plugin_config.accessible(group_or_user_id, matcher.plugin_name):
+            if i_plugin_config.accessible(group_or_user_id, matcher.plugin_name)[0]:
                 allow = True
                 break
 
@@ -117,11 +117,11 @@ async def _(bot: Bot, event: MessageEvent):
 
     arguments = msg[1:]
 
-    help_message = "config-modify 命令格式\n" \
-        "【1】config-modify help\n" \
-        "【2】config-modify show [u|g|user|group|None [用户号或群号]] \n" \
-        "【3】config-modify change u|g|user|group 用户号或群号 开启全部[隐藏]|关闭全部[隐藏]\n" \
-        "【4】config-modify change u|g|user|group 用户号或群号 开启|关闭 插件名|插件id [插件名|插件id ...]"
+    help_message = "CONFIG-MODIFY MANUAL\n" \
+        "(1) config-modify help\n" \
+        "(2) config-modify search [u(ser)|g(roup)|a(ll) [<qq_id>]] \n" \
+        "(3) config-modify update u(ser)|g(roup) <qq_id> openall|closeall [hidden]\n" \
+        "(4) config-modify update u(ser)|g(roup) <qq_id> open|close <plugin_name>|<plugin_id> [<plugin_name>|<plugin_id> ...]"
     
     not_find_message = r"config-modify 中没有 {} 选项，请参见 'config-modify help'"
     wrong_message = r"config-modify 中 {} 的使用有误，请参见 'config-modify help'"
@@ -140,16 +140,16 @@ async def _(bot: Bot, event: MessageEvent):
         await all_authority_locker.finish()
         return
 
-    elif arguments[0] == "show":
+    elif arguments[0] == "search":
         if len(arguments) == 1 or ( \
             (len(arguments) == 2 or (len(arguments) == 3 and arguments[2].isdigit())) and \
-            arguments[1] in ['u', 'g', 'user', 'group', 'None'] \
+            arguments[1] in ['u', 'user', 'g', 'group', 'a', 'all'] \
         ):
             send_message = ""
             for i_plugin_config in all_plugin_config_list:
-                send_message += "\n" + get_global_name(i_plugin_config) + "\n"
+                send_message += "\n# " + get_global_name(i_plugin_config) + "\n"
                 send_message += i_plugin_config.show(
-                    None if len(arguments) == 1 else arguments[1],
+                    'a' if len(arguments) == 1 else arguments[1],
                     None if len(arguments) != 3 else int(arguments[2])
                 )
             await all_authority_locker.send(send_message.strip())
@@ -161,19 +161,19 @@ async def _(bot: Bot, event: MessageEvent):
             await all_authority_locker.finish()
             return
 
-    elif arguments[0] == "change":
+    elif arguments[0] == "update":
         if len(arguments) >= 4 and \
-            arguments[1] in ['u', 'g', 'user', 'group'] and \
+            arguments[1] in ['u', 'user', 'g', 'group'] and \
             arguments[2].isdigit() and \
-            ((arguments[3] in ['开启', '关闭'] and len(arguments) > 4) or \
-            (arguments[3] in ['开启全部', '关闭全部', '开启全部隐藏', '关闭全部隐藏'] and len(arguments) == 4)):
+            ((arguments[3] in ['open', 'close'] and len(arguments) > 4) or \
+            (arguments[3] in ['openall', 'closeall'] and (len(arguments) == 4 or (len(arguments) == 5 and arguments[4] == "hidden")))):
             group_or_user_id = {
                 "group": int(arguments[2]) if arguments[1] in ['g', 'group'] else None,
                 "user": int(arguments[2]) if arguments[1] in ['u', 'user'] else None
             }
-            to_be_accessible = ('开' in arguments[3])
+            to_be_accessible = ('open' in arguments[3])
             if len(arguments) == 4:
-                if arguments[3] in ['开启全部', '关闭全部']:
+                if arguments[3] in ['openall', 'closeall'] and len(arguments) == 4:
                     for (name, tup) in plugin_config.plugin_name_dict.items():
                         plugin_config.change_access(group_or_user_id, name, to_be_accessible)
                     await all_authority_locker.send(
