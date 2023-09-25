@@ -6,44 +6,42 @@ from nonebot.adapters.onebot.v11 import Bot, MessageEvent, Message
 from nonebot_plugin_hammer_core.util.message_factory import reply_text
 
 random_matcher = on_message(rule=startswith(("random", "ran", "随机数", "随机")))
-all_matcher_for_random = on_message()
+all_matcher_for_random = on_message(rule=startswith(tuple(i for i in '0123456789dD')))
 
 # 跑团专用
 @all_matcher_for_random.handle()
 async def _(bot: Bot, event: MessageEvent):
     raw_msg = event.dict()['raw_message']
-    if raw_msg[0] in '0123456789dD':
-        content_list = list(re.findall('^([\d]*)(?:d|D)([\d]+)$', raw_msg))
-        if len(content_list) == 0:
-            await all_matcher_for_random.finish()
-            return
-        content = list(content_list[0])
-        # only two kinds:
-        # ['', '12'] or ['2', '123']
-        die_num = 1
-        if content[0] != '':
-            die_num = int(content[0])
-        if die_num > 16:
-            await all_matcher_for_random.send(reply_text("骰子数量过多", event))
-            await all_matcher_for_random.finish()
-            return
-        if die_num <= 0:
-            await all_matcher_for_random.finish()
-            return
-        die_range = int(content[1])
-        result = 0
+    content_list = list(re.findall('^([\d]*)(?:d|D)([\d]+)$', raw_msg))
+    if len(content_list) == 0:
+        await all_matcher_for_random.finish()
+        return
+    content = list(content_list[0])
+    # only two kinds:
+    # ['', '12'] or ['2', '123']
+    die_num = 1
+    if content[0] != '':
+        die_num = int(content[0])
+    if die_num > 16:
+        await all_matcher_for_random.send(reply_text("骰子数量过多", event))
+        await all_matcher_for_random.finish()
+        return
+    if die_num <= 0:
+        await all_matcher_for_random.finish()
+        return
+    die_range = int(content[1])
+    result = 0
+    now_data = random.randint(1, die_range)
+    reply = f"{now_data}"
+    result += now_data
+    for i in range(die_num - 1):
         now_data = random.randint(1, die_range)
-        reply = f"{now_data}"
+        reply += f" + {now_data}"
         result += now_data
-        for i in range(die_num - 1):
-            now_data = random.randint(1, die_range)
-            reply += f" + {now_data}"
-            result += now_data
-        if die_num >= 2:
-            reply += f" = {result}"
-        await all_matcher_for_random.send(reply_text(reply, event))
+    if die_num >= 2:
+        reply += f" = {result}"
+    await all_matcher_for_random.send(reply_text(reply, event))
     await all_matcher_for_random.finish()
-    return
 
 
 @random_matcher.handle()

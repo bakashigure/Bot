@@ -17,7 +17,8 @@
             "random": [3, true],
             "翻译": [67, true],
             "缩写": [68, true],
-            "biliav": [69, false]
+            "biliav": [69, false],
+            "背日语": [129, false]
         }
     },
     "hidden": {
