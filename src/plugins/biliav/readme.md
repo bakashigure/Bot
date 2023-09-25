@@ -3,7 +3,7 @@
 *可显示部分开始*
 
 > bilibili AV
-> 源码 https://github.com/knva/nonebot_plugin_biliav
+> 基于源码 https://github.com/knva/nonebot_plugin_biliav (有改动)
 
 #### 功能
 

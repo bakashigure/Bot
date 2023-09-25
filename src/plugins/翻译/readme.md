@@ -3,7 +3,7 @@
 *可显示部分开始*
 
 > 翻译插件   
-> 源码 https://github.com/Lancercmd/nonebot_plugin_translator
+> 基于源码 https://github.com/Lancercmd/nonebot_plugin_translator (有改动)
 
 #### 功能
 
