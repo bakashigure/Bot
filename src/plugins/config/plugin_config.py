@@ -1,6 +1,7 @@
 import yaml
 import time
 import json
+import os
 
 
 class PluginConfig:
@@ -139,6 +140,8 @@ class PluginConfig:
         self.lock = True
 
         if self.user_old:
+            if not os.path.exists(self.user_yaml_path):
+                open(self.user_yaml_path, 'w', encoding='utf-8').close()
             file = open(self.user_yaml_path, 'r', encoding='utf-8')
             yaml_read = yaml.safe_load(file.read())
             self.user_dict = {} if yaml_read is None else dict(yaml_read)
@@ -146,6 +149,8 @@ class PluginConfig:
             self.user_old = False
         
         if self.group_old:
+            if not os.path.exists(self.group_yaml_path):
+                open(self.group_yaml_path, 'w', encoding='utf-8').close()
             file = open(self.group_yaml_path, 'r', encoding='utf-8')
             yaml_read = yaml.safe_load(file.read())
             self.group_dict = {} if yaml_read is None else dict(yaml_read)

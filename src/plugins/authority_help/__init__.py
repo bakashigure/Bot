@@ -123,8 +123,8 @@ async def _(bot: Bot, event: MessageEvent):
         "(3) config-modify update u(ser)|g(roup) <qq_id> oa|ca|da [hidden]\n" \
         "(4) config-modify update u(ser)|g(roup) <qq_id> open|close|default <plugin_name>|<plugin_id> [<plugin_name>|<plugin_id> ...]"
     
-    not_find_message = r"config-modify 中没有 {} 选项，请参见 'config-modify help'"
-    wrong_message = r"config-modify 中 {} 的使用有误，请参见 'config-modify help'"
+    not_find_message = r"config-modify 中没有 {} 选项，请参见 `config-modify help`"
+    wrong_message = r"config-modify 中 {} 的使用有误，请参见 `config-modify help`"
 
     def get_global_name(var) -> str:
         name = [ i for i, a in globals().items() if a == var][0]
