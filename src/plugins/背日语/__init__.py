@@ -227,7 +227,7 @@ def get(choice: int, group_id: int) -> None:
                 )
 
 
-ans_catcher = on_message(rule=Rule(is_ans), priority=5)
+ans_catcher = on_message(rule=Rule(is_ans), priority=1)
 
 
 @ans_catcher.handle()
@@ -245,13 +245,11 @@ async def ans_handle(bot: Bot, event: GroupMessageEvent, state: T_State):
         or event.dict()["raw_message"].strip() == word[group_id]["kanares"]
     ):
         lock[group_id] = True
-        await ans_catcher.send(reply_text("答对了！", event))
         await ans_catcher.send(
-            "【"
-            + str(now_index[group_id])
-            + "】"
-            + word[group_id].get("name")
-            + word[group_id].get("res")
+            reply_text(
+                f"答对了！\n【{now_index[group_id]}】{word[group_id]['name']}{word[group_id]['res']}",
+                event,
+            )
         )
 
         # word_catcher
@@ -271,13 +269,10 @@ async def ans_handle(bot: Bot, event: GroupMessageEvent, state: T_State):
     ]:
         lock[group_id] = True
         await ans_catcher.send(
-            "公布答案\n"
-            + "【"
-            + str(now_index[group_id])
-            + "】"
-            + word[group_id].get("name")
-            + word[group_id]["res"]
-            + "\n要认真记住哦"
+            reply_text(
+                f"公布答案\n【{now_index[group_id]}】{word[group_id]['name']}{word[group_id]['res']}\n要认真记住哦",
+                event,
+            )
         )
 
         # word_catcher
