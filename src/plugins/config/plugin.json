@@ -13,7 +13,7 @@
         },
         "register": {
             "help": [1, true],
-            "echo": [2, false],
+            "echo": [2, true],
             "random": [3, true],
             "翻译": [67, true],
             "缩写": [68, true],
