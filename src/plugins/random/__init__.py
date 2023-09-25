@@ -12,7 +12,7 @@ all_matcher_for_random = on_message()
 @all_matcher_for_random.handle()
 async def _(bot: Bot, event: MessageEvent):
     raw_msg = event.dict()['raw_message']
-    if raw_msg[0] in '123456789dD':
+    if raw_msg[0] in '0123456789dD':
         content_list = list(re.findall('^([\d]*)(?:d|D)([\d]+)$', raw_msg))
         if len(content_list) == 0:
             await all_matcher_for_random.finish()
