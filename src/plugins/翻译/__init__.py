@@ -47,9 +47,9 @@ async def _(bot: Bot, event: Event, state: T_State):
 
     async def _onFocus(bot: Bot, event: Event):
         if isinstance(event, GroupMessageEvent):
-            return event.message_type == message_type and event.get_user_id() == user_id and await permission(bot, event) and event.group_id == group_id
+            return event.message_type == message_type and event.get_user_id() == user_id and event.group_id == group_id
         elif isinstance(event, PrivateMessageEvent):
-            return event.message_type == message_type and event.get_user_id() == user_id and await permission(bot, event)
+            return event.message_type == message_type and event.get_user_id() == user_id
     return Permission(_onFocus)
 
 
@@ -74,6 +74,21 @@ async def getReqSign(params: dict) -> str:
     if version_info[0] > 2:
         signature = signature.decode()
     return signature
+
+
+@sudo_translate.handle()
+async def _(bot: Bot, event: Event, state: T_State):
+    event_dict = event.dict()
+    group_id: int = event_dict.get('group_id', 0)
+    state['Source'] = 'auto'
+    state['Target'] = 'zh'
+    source_text = event.get_plaintext().strip()
+    source_text = re.findall('^(?:翻译|速速翻译)[:：，,\s]*(.*)', source_text)[0]
+    if not source_text:
+        await sudo_translate.send(reply_text("请输入要翻译的内容", event))
+    else:
+        state['SourceText'] = source_text
+        go_trans(bot, event, state)
 
 
 @translate.handle()
@@ -134,22 +149,23 @@ async def _(bot: Bot, event: Event, state: T_State):
                         else:
                             state['SourceText'] = input[1]
             else:
-                state['SourceText'] = event.get_plaintext()
+                # state['SourceText'] = event.get_plaintext()
+                pass
         message = f'请选择输入语种，可选值如下~\n{state["available"]}'
         if 'header' in state:
             message = ''.join([state['header'], f'{message}'])
         state['prompt'] = message
-        if not state['Source']:
+        if 'Source' not in state:
             await translate.send(reply_text(message, event))
     else:
         logger.warning('Not supported: translator')
         return
 
-
 @translate.got('Source')
 async def _(bot: Bot, event: Event, state: T_State):
     if isinstance(event, MessageEvent):
         available = deepcopy(state['valid'])
+        state['Source'] = event.dict()['raw_message']
         if state['Source'].lower() == 'jp':
             state['Source'] = 'ja'
         elif not state['Source'] in state['valid']:
@@ -203,6 +219,7 @@ async def _(bot: Bot, event: Event, state: T_State):
 @translate.got('Target')
 async def _(bot: Bot, event: Event, state: T_State):
     if isinstance(event, MessageEvent):
+        state['Target'] = event.dict()['raw_message']
         if state['Target'].lower() == 'jp':
             state['Target'] = 'ja'
         elif not state['Target'] in state['valid']:
@@ -227,25 +244,11 @@ async def _(bot: Bot, event: Event, state: T_State):
         return
 
 
-@sudo_translate.handle()
-async def _(bot: Bot, event: Event, state: T_State):
-    event_dict = event.dict()
-    group_id: int = event_dict.get('group_id', 0)
-    state['Source'] = 'auto'
-    state['Target'] = 'zh'
-    source_text = event.get_plaintext().strip()
-    source_text = re.findall('^(?:翻译|速速翻译)[:：，,\s]*(.*)', source_text)[0]
-    if not source_text:
-        await sudo_translate.send(reply_text("请输入要翻译的内容", event))
-    else:
-        state['SourceText'] = source_text
-        go_trans(bot, event, state)
-
-
-@sudo_translate.got('SourceText')
 @translate.got('SourceText')
+@sudo_translate.got('SourceText')
 async def go_trans(bot: Bot, event: Event, state: T_State):
     if isinstance(event, MessageEvent):
+        # state['SourceText'] = event.dict()['raw_message']
         endpoint = 'https://tmt.tencentcloudapi.com'
         params = {
             'Source': state['Source'],
