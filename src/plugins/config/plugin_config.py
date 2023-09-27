@@ -1,7 +1,9 @@
+import os
 import yaml
 import time
 import json
-import os
+from typing import Tuple
+from pathlib import Path
 
 
 class PluginConfig:
@@ -9,30 +11,31 @@ class PluginConfig:
     def __init__(self, file_dir_path, group_yaml_file, user_yaml_file):
 
         self.lock = False
-        self.group_yaml_path = file_dir_path + group_yaml_file
-        self.user_yaml_path = file_dir_path + user_yaml_file
+        self.group_yaml_path = Path(file_dir_path) / Path(group_yaml_file)
+        self.user_yaml_path = Path(file_dir_path) / Path(user_yaml_file)
 
+        self.plugin_name_dict = {}
         """
         self.plugin_name_dict = {
             "plugin_name": [id, default_access],
             "plugin_name": [id, default_access],
             ...
-        }
-        // id is int32 number
-        // default_access is true or false
+        }\n
+        `id` is int32 number\n
+        `default_access` is true or false
         """
-        self.plugin_name_dict = {}
 
+        self.plugin_id_dict = {}
         """
         self.plugin_id_dict = {
             id: "plugin_name",
             id: "plugin_name",
             ...
-        }
-        // id is int32 number
+        }\n
+        `id` is int32 number
         """
-        self.plugin_id_dict = {}
 
+        self.user_dict = dict()
         """
         self.user_dict = {
             user_id: {
@@ -46,11 +49,11 @@ class PluginConfig:
                 ...
             },
             ...
-        }
-        // "<now_access>" is "t" (true), "f" (false) or "d" (default)
+        }\n
+        "<now_access>" is "t" (true), "f" (false) or "d" (default)
         """
-        self.user_dict = dict()
 
+        self.group_dict = dict()
         """
         self.group_dict = {
             group_id: {
@@ -64,10 +67,9 @@ class PluginConfig:
                 ...
             },
             ...
-        }
-        // "<now_access>" is "t" (true), "f" (false) or "d" (default)
+        }\n
+        "<now_access>" is "t" (true), "f" (false) or "d" (default)
         """
-        self.group_dict = dict()
 
         # need to read again
         self.user_old = True
@@ -78,40 +80,37 @@ class PluginConfig:
         self.group_dirty = True
 
     # should lock
-    def register_plugins(self, plugin_name_dict) -> None:
+    def register_plugins(self, plugin_name_dict: dict) -> None:
+        """
+        plugin_name_dict: { \
+            "plugin_name": [id, default_access], \
+            "plugin_name": [id, default_access], \
+            ... \
+        } \
+        `id` is int32 number, \
+        `default_access` is true or false
+        """
         while self.lock:
             time.sleep(0.5)
         self.lock = True
-
-        """
-        [input]
-        plugin_name_dict = {
-            "plugin_name": [id, default_access],
-            "plugin_name": [id, default_access],
-            ...
-        }
-        // id is int32 number
-        // default_access is true or false
-        """
         self.plugin_name_dict = plugin_name_dict
         self.plugin_id_dict = {tup[0] : name for (name, tup) in self.plugin_name_dict.items()}
-
         self.lock = False
 
 
-    def get_name(self, id) -> str:
+    def get_name(self, id: int) -> str:
         return self.plugin_id_dict.get(id, None)
 
 
-    def get_id(self, name) -> int:
+    def get_id(self, name: str) -> int:
         return self.plugin_name_dict.get(name, (None, False))[0]
 
 
-    def get_default_access(self, name) -> int:
+    def get_default_access(self, name: str) -> int:
         return self.plugin_name_dict.get(name, (None, False))[1]
 
 
-    def parse(self, id_or_name) -> tuple:
+    def parse(self, id_or_name) -> Tuple[str, int, bool]:
         """
         [input]
         id_or_name = str("name") or int(x)
@@ -179,13 +178,13 @@ class PluginConfig:
         
         self.lock = False
     
-    def accessible(self, group_or_user_id: dict, plugin_name: str) -> tuple:
+    def accessible(self, group_or_user_id: dict, plugin_name: str) -> Tuple[bool, bool]:
         """
         [input]
         group_or_user_id = { "group": None, "user": 123456 }  or  { "user": 123456 }
                            { "group": 123456, "user": None }  or  { "group": 123456 }
                            { "group": None, "user": None } (return False, False)
-        
+
         [output]
         tuple: (accessible(True of False), is_default(True of False))
         """
@@ -362,27 +361,27 @@ with open('./src/plugins/config/plugin.json', 'r') as plugin_file:
     # user can only use the default access, unless mannual granted in yaml file
     # name, id cannot be the same (cannot be the same as hidden, neither)
 
-    plugin_config = PluginConfig(
+    normal_plugins = PluginConfig(
         plugin_data["file_dir_path"],
         plugin_data["normal"]["file"]["group"],
         plugin_data["normal"]["file"]["user"],
     )
-    plugin_config.register_plugins(plugin_data["normal"]["register"])
+    normal_plugins.register_plugins(plugin_data["normal"]["register"])
 
     # hidden:
     # only superuser can change permission for group
     # user can only use the default access, unless mannual granted in yaml file
     # name, id cannot be the same (cannot be the same as non-hidden, neither)
 
-    hidden_plugin_config = PluginConfig(
+    hidden_plugins = PluginConfig(
         plugin_data["file_dir_path"],
         plugin_data["hidden"]["file"]["group"],
         plugin_data["hidden"]["file"]["user"],
     )
-    hidden_plugin_config.register_plugins(plugin_data["hidden"]["register"])
+    hidden_plugins.register_plugins(plugin_data["hidden"]["register"])
 
     # all
-    all_plugin_config_list = [
-        plugin_config,
-        hidden_plugin_config,
+    all_plugins_lists = [
+        normal_plugins,
+        hidden_plugins,
     ]

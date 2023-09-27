@@ -1,19 +1,19 @@
 # import nonebot
+import re
 import asyncio
 
-from nonebot import get_driver, on_regex
-from .config import Config
-from nonebot.typing import T_State
 from nonebot.adapters.onebot.v11 import Bot, Event
+from nonebot import get_driver, on_regex
+from nonebot.typing import T_State
 from nonebot.params import T_State
+
+from .data_source import get_abv_data
+from .config import Config
 
 global_config = get_driver().config
 config = global_config.dict()
 b_sleep_time = config.get('b_sleep_time', 2)
 b_sleep_time = int(b_sleep_time)
-
-from .data_source import get_abv_data
-import re
 
 # Export something for other plugin
 # export = nonebot.export()

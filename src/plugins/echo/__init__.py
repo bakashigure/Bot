@@ -1,7 +1,7 @@
 import re
 from nonebot import on_message
-from nonebot.adapters.onebot.v11 import Bot, MessageEvent, Message, MessageSegment
 from nonebot.rule import startswith
+from nonebot.adapters.onebot.v11 import Bot, MessageEvent, Message, MessageSegment
 
 echo_matcher = on_message(rule=startswith("echo"))
 

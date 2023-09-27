@@ -3,12 +3,12 @@ from nonebot import on_message
 from nonebot.rule import startswith
 from nonebot.adapters.onebot.v11 import Bot, MessageEvent
 
-from ..config.plugin_config import plugin_config
+from ..config.plugin_config import normal_plugins
 
 help_matcher = on_message(rule=startswith(('help', 'Help', '帮助', 'man', 'Man')))
 
 '''
-help 只会处理 plugin_config 中注册的插件
+help 只会处理 normal_plugins 中注册的插件
 '''
 
 def is_number(s):
@@ -55,22 +55,22 @@ async def _(bot: Bot, event: MessageEvent):
             await help_matcher.finish()
             return
         msg = '可用的命令有\n\n'
-        for plugin_id, plugin_name in plugin_config.items():
+        for plugin_id, plugin_name in normal_plugins.items():
             msg += '(' + str(plugin_id) + ")\t" + plugin_name + "\t" \
-                + ("已开启" if plugin_config.accessible(group_or_user_id, plugin_name)[0] else "已关闭") + "\n"
+                + ("已开启" if normal_plugins.accessible(group_or_user_id, plugin_name)[0] else "已关闭") + "\n"
         msg += '\n使用 `man [名称]` 获取各个命令的详细帮助'
         msg += '\n管理者可使用 `config-modify` 直接控制开关'
         await help_matcher.send(msg)
     
     elif is_number(content):
-        name = plugin_config.get_name(int(float(content)))
+        name = normal_plugins.get_name(int(float(content)))
         if name != None:
             await help_matcher.send(show_readme(name))
         else:
             await help_matcher.send("未找到" + content + "号命令")
     
     else:
-        pid = plugin_config.get_id(content)
+        pid = normal_plugins.get_id(content)
         if pid != None:
             await help_matcher.send(show_readme(content))
         else:

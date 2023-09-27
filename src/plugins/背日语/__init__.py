@@ -1,16 +1,18 @@
-import asyncio
 import re
-from collections import defaultdict
-from nonebot.rule import Rule
-from nonebot import on_command, on_message
-from nonebot.adapters.onebot.v11 import Bot, GroupMessageEvent
-from nonebot.typing import T_State
-from pathlib import Path
-import random
 import json
-import timeit
 import time
+import random
+import timeit
+import asyncio
 import threading
+
+from pathlib import Path
+from collections import defaultdict
+
+from nonebot import on_command, on_message
+from nonebot.rule import Rule
+from nonebot.typing import T_State
+from nonebot.adapters.onebot.v11 import Bot, GroupMessageEvent
 from nonebot_plugin_hammer_core.util.message_factory import reply_text
 
 
