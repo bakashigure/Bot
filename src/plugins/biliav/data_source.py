@@ -132,6 +132,7 @@ async def get_abv_data(abv_list: list[str]) -> list[str]:
             msg += "av" + abvcode + "\n"
         try:
             title: str = rd['data']['title']
+            author: str = rd['data'].get('owner').get('name')
             pic: str = rd['data']['pic']
             stat: dict[str:str, int, dict] = rd['data']['stat']
             view: str = stat['view']
@@ -150,8 +151,9 @@ async def get_abv_data(abv_list: list[str]) -> list[str]:
             if len(desc) > 32:
                 desc = desc[0:32] + "……"
 
-            msg += title + "\n" + MessageSegment.image(
-                pic) + f"播放 {view} 弹幕 {danmaku} 评论 {reply}\n点赞 {like} 硬币 {coin} 收藏 {fav} 分享 {share}\n{link}\n简介\n{desc}"
+            msg += f"{title}\n{author}\n" \
+                + MessageSegment.image(pic) \
+                + f"播放 {view} 弹幕 {danmaku} 评论 {reply}\n点赞 {like} 硬币 {coin} 收藏 {fav} 分享 {share}\n{link}\n简介\n{desc}"
 
             # if b_comments:
             #     msg += await get_top_comments(abvcode)
