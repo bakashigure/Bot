@@ -12,7 +12,7 @@ config = global_config.dict()
 b_sleep_time = config.get('b_sleep_time', 2)
 b_sleep_time = int(b_sleep_time)
 
-from .data_source import get_av_data
+from .data_source import get_abv_data
 import re
 
 # Export something for other plugin
@@ -27,12 +27,12 @@ biliav = on_regex("[Aa][Vv]\d{1,12}|[Bb][Vv]1[A-Za-z0-9]{2}4.1.7[A-Za-z0-9]{2}|[
 
 @biliav.handle()
 async def handle(bot: Bot, event: Event, state: T_State):
-    avcode_list: list[str] = re.compile(
+    abvcode_list: list[str] = re.compile(
         "[Aa][Vv]\d{1,12}|[Bb][Vv]1[A-Za-z0-9]{2}4.1.7[A-Za-z0-9]{2}|[Bb]23\.[Tt][Vv]/[A-Za-z0-9]{7}").findall(
         str(event.get_message()))
-    if not avcode_list:
+    if not abvcode_list:
         return
-    rj_list: list[str] = await get_av_data(avcode_list)
+    rj_list: list[str] = await get_abv_data(abvcode_list)
     for rj in rj_list:
         await bot.send(event=event, message=rj)
         await asyncio.sleep(b_sleep_time)

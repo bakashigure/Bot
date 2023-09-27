@@ -9,28 +9,28 @@ url: str = 'https://api.bilibili.com/x/web-interface/view'
 global_config = nonebot.get_driver().config
 config = global_config.dict()
 b_comments = config.get('b_comments', False)
-b_b23tv = config.get('b_b23tv', True)
+# b_b23tv = config.get('b_b23tv', True)
 
 if type(b_comments) != bool and b_comments == "True":
     b_comments = True
 else:
     b_comments = False
 
-if type(b_b23tv) != bool and b_b23tv == "False":
-    b_b23tv = False
-else:
-    b_b23tv = True
+# if type(b_b23tv) != bool and b_b23tv == "False":
+#     b_b23tv = False
+# else:
+#     b_b23tv = True
 
-import math
+# import math
 
 
 async def b23tv2bv(b23tv: str) -> str:
     async with httpx.AsyncClient() as client:
         headers = {"Content-Type": "application/x-www-form-urlencoded"}
-        r = await client.get(b23tv, headers=headers)
+        r = await client.get('https://' + b23tv, headers=headers)
     return re.findall("[Bb][Vv]1[A-Za-z0-9]{2}4.1.7[A-Za-z0-9]{2}", str(r.next_request.url))[0]
 
-
+"""
 async def bv2av(Bv: str) -> int:
     # 1.去除Bv号前的"Bv"字符
     BvNo1: str = Bv[2:]
@@ -73,8 +73,9 @@ async def bv2av(Bv: str) -> int:
     temp: int = 177451812
 
     return sum ^ temp
+"""
 
-
+"""
 async def get_top_comments(av: str) -> str:
     av: str = str(av)
     if av[0:2] == "BV":
@@ -96,31 +97,26 @@ async def get_top_comments(av: str) -> str:
         txt = c['content']['message']
         msg += f'{name}: {txt}\n\n'
     return msg
+"""
 
-
-async def get_av_data(av_list: list[str]) -> list[str]:
+async def get_abv_data(abv_list: list[str]) -> list[str]:
     msg_list: list[str] = []
-    for avcode in av_list:
+    for abvcode in abv_list:
         msg: str = ""
-        is_bv = False
-        if avcode[0:2].upper() == "BV":
-            is_bv = True
-        elif avcode[0:2].lower() == "av":
-            avcode = avcode.replace("av", "")
-        elif avcode[0:7].lower() == "b23.tv/":
-            if b_b23tv:
-                msg += avcode + ", "
-                avcode = await b23tv2bv(avcode)
-                avcode = await bv2av(avcode)
-            else:
-                continue
+        abv_type = None  # None, "av", "bv"
+        if abvcode[0:2].upper() == "BV":
+            abv_type = "bv"
+        elif abvcode[0:2].lower() == "av":
+            abv_type = "av"
+            abvcode = abvcode.replace("av", "")
+        elif abvcode[0:7].lower() == "b23.tv/":
+            # if b_b23tv:
+            msg += abvcode + ", "
+            abvcode = await b23tv2bv(abvcode)
+            abv_type = "bv"
         else:
             continue
-        new_url: str = ""
-        if is_bv:
-            new_url: str = url + f"?bvid={avcode}"
-        else:
-            new_url: str = url + f"?aid={avcode}"
+        new_url: str = url + (f"?bvid={abvcode}" if abv_type == "bv" else f"?aid={abvcode}")
         async with httpx.AsyncClient() as client:
             headers = {'Content-Type': "application/x-www-form-urlencoded"}
             r = await client.get(new_url, headers=headers)
@@ -130,10 +126,10 @@ async def get_av_data(av_list: list[str]) -> list[str]:
                 continue
         else:
             continue
-        if is_bv:
-            msg += avcode + "\n"
+        if abv_type == "bv":
+            msg += abvcode + "\n"
         else:
-            msg += "av" + avcode + "\n"
+            msg += "av" + abvcode + "\n"
         try:
             title: str = rd['data']['title']
             pic: str = rd['data']['pic']
@@ -146,10 +142,10 @@ async def get_av_data(av_list: list[str]) -> list[str]:
             share: str = stat['share']
             like: str = stat['like']
             link: str = ""
-            if is_bv:
-                link: str = f"https://www.bilibili.com/video/{avcode}"
+            if abv_type == "bv":
+                link: str = f"https://www.bilibili.com/video/{abvcode}"
             else:
-                link: str = f"https://www.bilibili.com/video/av{avcode}"
+                link: str = f"https://www.bilibili.com/video/av{abvcode}"
             desc: str = rd['data']['desc']
             if len(desc) > 32:
                 desc = desc[0:32] + "……"
@@ -157,8 +153,8 @@ async def get_av_data(av_list: list[str]) -> list[str]:
             msg += title + "\n" + MessageSegment.image(
                 pic) + f"播放 {view} 弹幕 {danmaku} 评论 {reply}\n点赞 {like} 硬币 {coin} 收藏 {fav} 分享 {share}\n{link}\n简介\n{desc}"
 
-            if b_comments:
-                msg += await get_top_comments(avcode)
+            # if b_comments:
+            #     msg += await get_top_comments(abvcode)
 
             msg_list.append(msg)
         except:
