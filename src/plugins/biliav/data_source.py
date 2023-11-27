@@ -3,6 +3,7 @@ import json
 import httpx
 
 import nonebot
+from nonebot.log import logger
 from nonebot.adapters.onebot.v11 import MessageSegment
 
 url: str = 'https://api.bilibili.com/x/web-interface/view'
@@ -27,7 +28,7 @@ else:
 
 async def b23tv2bv(b23tv: str) -> str:
     async with httpx.AsyncClient() as client:
-        headers = {"Content-Type": "application/x-www-form-urlencoded"}
+        headers = {"Content-Type": "application/json; charset=utf-8"}
         r = await client.get('https://' + b23tv, headers=headers)
     return re.findall("[Bb][Vv]1[A-Za-z0-9]{2}4.1.7[A-Za-z0-9]{2}", str(r.next_request.url))[0]
 
@@ -102,6 +103,8 @@ async def get_top_comments(av: str) -> str:
 
 async def get_abv_data(abv_list: list[str]) -> list[str]:
     msg_list: list[str] = []
+    if len(abv_list) == 0:
+        logger.warning("no abv_list")
     for abvcode in abv_list:
         msg: str = ""
         abv_type = None  # None, "av", "bv"
@@ -116,6 +119,7 @@ async def get_abv_data(abv_list: list[str]) -> list[str]:
             abvcode = await b23tv2bv(abvcode)
             abv_type = "bv"
         else:
+            logger.warning("change to bv error")
             continue
         new_url: str = url + (f"?bvid={abvcode}" if abv_type == "bv" else f"?aid={abvcode}")
         async with httpx.AsyncClient() as client:
@@ -124,8 +128,10 @@ async def get_abv_data(abv_list: list[str]) -> list[str]:
         rd: dict[str:str, int, dict] = json.loads(r.text)
         if rd['code'] == 0:
             if not rd["data"]:
+                logger.warning('get rd["data"] error')
                 continue
         else:
+            logger.warning(f'get rd["code"] error, {rd["code"]}')
             continue
         if abv_type == "bv":
             msg += abvcode + "\n"
@@ -160,7 +166,7 @@ async def get_abv_data(abv_list: list[str]) -> list[str]:
             #     msg += await get_top_comments(abvcode)
 
             msg_list.append(msg)
-        except:
-            msg += "错误!!! 没有此av或BV号。"
+        except Exception as e:
+            logger.warning(e)
 
     return msg_list

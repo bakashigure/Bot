@@ -1,7 +1,7 @@
 # import nonebot
 import re
 import asyncio
-
+from nonebot.log import logger
 from nonebot.adapters.onebot.v11 import Bot, Event
 from nonebot import get_driver, on_regex
 from nonebot.typing import T_State
@@ -12,8 +12,8 @@ from .config import Config
 
 global_config = get_driver().config
 config = global_config.dict()
-b_sleep_time = config.get('b_sleep_time', 2)
-b_sleep_time = int(b_sleep_time)
+# b_sleep_time = config.get('b_sleep_time', 2)
+# b_sleep_time = int(b_sleep_time)
 
 # Export something for other plugin
 # export = nonebot.export()
@@ -32,7 +32,11 @@ async def handle(bot: Bot, event: Event, state: T_State):
         str(event.get_message()))
     if not abvcode_list:
         return
+    logger.debug("start matching biliav")
     rj_list: list[str] = await get_abv_data(abvcode_list)
     for rj in rj_list:
-        await bot.send(event=event, message=rj)
-        await asyncio.sleep(b_sleep_time)
+        await biliav.send(rj)
+    if len(rj_list) == 0:
+        logger.debug("no data in biliav")
+    logger.debug("stop sending biliav")
+    await biliav.finish()
