@@ -1,81 +1,44 @@
 import re
+import sys
 import json
 import httpx
-
-import nonebot
-from nonebot.log import logger
+import logging
+# from nonebot.log import logger
 from nonebot.adapters.onebot.v11 import MessageSegment
 
-url: str = 'https://api.bilibili.com/x/web-interface/view'
 
-global_config = nonebot.get_driver().config
-config = global_config.dict()
-b_comments = config.get('b_comments', False)
-# b_b23tv = config.get('b_b23tv', True)
+logger = logging.getLogger("biliav")
+logger.setLevel(logging.DEBUG)
+logger.propagate = False
 
-if type(b_comments) != bool and b_comments == "True":
-    b_comments = True
-else:
-    b_comments = False
+hfh_formatter = logging.Formatter(
+    "%(asctime)s - %(module)s - %(levelname)s - %(message)s"
+)
+hfh = logging.handlers.RotatingFileHandler(
+    '../biliav.log', mode="a", maxBytes=1024 * 1024 * 8, backupCount=1
+)
+hfh.setFormatter(hfh_formatter)
+logger.addHandler(hfh)
 
-# if type(b_b23tv) != bool and b_b23tv == "False":
-#     b_b23tv = False
-# else:
-#     b_b23tv = True
+hsh_formatter = logging.Formatter(
+    "%(asctime)s [%(levelname)s] %(module)s | %(message)s"
+)
+hsh = logging.StreamHandler(sys.stdout)
+hsh.setFormatter(hsh_formatter)
+logger.addHandler(hsh)
 
-# import math
 
+HEADER = {
+    "Content-Type": "application/json; charset=utf-8",
+    "Accept": "image/gif, image/jpeg, image/pjpeg, application/x-ms-application, application/xaml+xml, application/x-ms-xbap, */*",
+    "User-Agent": "Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 10.0; WOW64; Trident/7.0; .NET4.0C; .NET4.0E; Tablet PC 2.0; wbx 1.0.0; wbxapp 1.0.0; Zoom 3.6.0)"
+}
 
 async def b23tv2bv(b23tv: str) -> str:
     async with httpx.AsyncClient() as client:
-        headers = {"Content-Type": "application/json; charset=utf-8"}
-        r = await client.get('https://' + b23tv, headers=headers)
+        r = await client.get('https://' + b23tv, headers=HEADER)
     return re.findall("[Bb][Vv]1[A-Za-z0-9]{2}4.1.7[A-Za-z0-9]{2}", str(r.next_request.url))[0]
 
-"""
-async def bv2av(Bv: str) -> int:
-    # 1.去除Bv号前的"Bv"字符
-    BvNo1: str = Bv[2:]
-    keys: dict[str:str] = {
-        '1': '13', '2': '12', '3': '46', '4': '31', '5': '43', '6': '18', '7': '40', '8': '28', '9': '5',
-        'A': '54', 'B': '20', 'C': '15', 'D': '8', 'E': '39', 'F': '57', 'G': '45', 'H': '36', 'J': '38', 'K': '51',
-        'L': '42', 'M': '49', 'N': '52', 'P': '53', 'Q': '7', 'R': '4', 'S': '9', 'T': '50', 'U': '10', 'V': '44',
-        'W': '34', 'X': '6', 'Y': '25', 'Z': '1',
-        'a': '26', 'b': '29', 'c': '56', 'd': '3', 'e': '24', 'f': '0', 'g': '47', 'h': '27', 'i': '22', 'j': '41',
-        'k': '16', 'm': '11', 'n': '37', 'o': '2',
-        'p': '35', 'q': '21', 'r': '17', 's': '33', 't': '30', 'u': '48', 'v': '23', 'w': '55', 'x': '32', 'y': '14',
-        'z': '19'
-
-    }
-    # 2. 将key对应的value存入一个列表
-    BvNo2: list[int] = []
-    for index, ch in enumerate(BvNo1):
-        BvNo2.append(int(str(keys[ch])))
-
-    # 3. 对列表中不同位置的数进行*58的x次方的操作
-
-    BvNo2[0]: int = int(BvNo2[0] * math.pow(58, 6))
-    BvNo2[1]: int = int(BvNo2[1] * math.pow(58, 2))
-    BvNo2[2]: int = int(BvNo2[2] * math.pow(58, 4))
-    BvNo2[3]: int = int(BvNo2[3] * math.pow(58, 8))
-    BvNo2[4]: int = int(BvNo2[4] * math.pow(58, 5))
-    BvNo2[5]: int = int(BvNo2[5] * math.pow(58, 9))
-    BvNo2[6]: int = int(BvNo2[6] * math.pow(58, 3))
-    BvNo2[7]: int = int(BvNo2[7] * math.pow(58, 7))
-    BvNo2[8]: int = int(BvNo2[8] * math.pow(58, 1))
-    BvNo2[9]: int = int(BvNo2[9] * math.pow(58, 0))
-
-    # 4.求出这10个数的合
-    sum: int = 0
-    for i in BvNo2:
-        sum += i
-    # 5. 将和减去100618342136696320
-    sum -= 100618342136696320
-    # 6. 将sum 与177451812进行异或
-    temp: int = 177451812
-
-    return sum ^ temp
-"""
 
 """
 async def get_top_comments(av: str) -> str:
@@ -101,42 +64,62 @@ async def get_top_comments(av: str) -> str:
     return msg
 """
 
+
 async def get_abv_data(abv_list: list[str]) -> list[str]:
+
     msg_list: list[str] = []
+    video_list = set()
+
+    URL: str = 'https://api.bilibili.com/x/web-interface/view'
+
     if len(abv_list) == 0:
         logger.warning("no abv_list")
+
     for abvcode in abv_list:
-        msg: str = ""
-        abv_type = None  # None, "av", "bv"
-        if abvcode[0:2].upper() == "BV":
+
+        # get real av / bv
+        abv_type = "av"
+        if abvcode[0:2].lower() == "bv":
             abv_type = "bv"
+            logger.debug("bv")
         elif abvcode[0:2].lower() == "av":
             abv_type = "av"
             abvcode = abvcode.replace("av", "")
+            logger.debug("bv")
         elif abvcode[0:7].lower() == "b23.tv/":
             # if b_b23tv:
-            msg += abvcode + ", "
             abvcode = await b23tv2bv(abvcode)
             abv_type = "bv"
+            logger.debug("bv (from btv)")
         else:
-            logger.warning("change to bv error")
+            logger.error("detect av or bv error")
             continue
-        new_url: str = url + (f"?bvid={abvcode}" if abv_type == "bv" else f"?aid={abvcode}")
+
+        # delete duplicated
+        if abvcode in video_list:
+            logger.warning(f"abvcode {abvcode} detected, skipping")
+            continue
+
+        # get the data
+        new_url: str = URL + (f"?bvid={abvcode}" if abv_type == "bv" else f"?aid={abvcode}")
+        logger.warning(f"start to request {new_url}")
         async with httpx.AsyncClient() as client:
-            headers = {'Content-Type': "application/x-www-form-urlencoded"}
-            r = await client.get(new_url, headers=headers)
+            r = await client.get(new_url, headers=HEADER)
         rd: dict[str:str, int, dict] = json.loads(r.text)
-        if rd['code'] == 0:
-            if not rd["data"]:
-                logger.warning('get rd["data"] error')
-                continue
-        else:
-            logger.warning(f'get rd["code"] error, {rd["code"]}')
+
+        # if error
+        if rd['code'] == 0 and not rd["data"]:
+            logger.error('get rd["data"] error')
             continue
-        if abv_type == "bv":
-            msg += abvcode + "\n"
-        else:
-            msg += "av" + abvcode + "\n"
+        elif rd['code'] != 0:
+            logger.error(f'get rd["code"] error, {rd["code"]}')
+            continue
+
+        # av code change
+        if abv_type == "av":
+            abvcode = "av" + abvcode
+
+        # succeed
         try:
             title: str = rd['data']['title']
             author: str = rd['data'].get('owner').get('name')
@@ -149,24 +132,20 @@ async def get_abv_data(abv_list: list[str]) -> list[str]:
             coin: str = stat['coin']
             share: str = stat['share']
             like: str = stat['like']
-            link: str = ""
-            if abv_type == "bv":
-                link: str = f"https://www.bilibili.com/video/{abvcode}"
-            else:
-                link: str = f"https://www.bilibili.com/video/av{abvcode}"
+            link: str = f"https://www.bilibili.com/video/{abvcode}"
             desc: str = rd['data']['desc']
-            if len(desc) > 32:
-                desc = desc[0:32] + "……"
+            if len(desc) > 32: desc = desc[0:32] + "……"
 
-            msg += f"{title}\n{author}\n" \
+            logger.info(f"titled {title}")
+            msg = f"{title}\n{author}\n" \
                 + MessageSegment.image(pic) \
                 + f"播放 {view} 弹幕 {danmaku} 评论 {reply}\n点赞 {like} 硬币 {coin} 收藏 {fav} 分享 {share}\n{link}\n简介\n{desc}"
-
-            # if b_comments:
-            #     msg += await get_top_comments(abvcode)
-
             msg_list.append(msg)
+
+            # delete duplicated
+            video_list.add(abvcode[2:] if abv_type == "av" else abvcode)
+
         except Exception as e:
-            logger.warning(e)
+            logger.error(e)
 
     return msg_list
