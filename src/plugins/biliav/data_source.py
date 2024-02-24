@@ -85,7 +85,7 @@ async def get_abv_data(abv_list: list[str]) -> list[str]:
         elif abvcode[0:2].lower() == "av":
             abv_type = "av"
             abvcode = abvcode.replace("av", "")
-            logger.debug("bv")
+            logger.debug("av")
         elif abvcode[0:7].lower() == "b23.tv/":
             # if b_b23tv:
             abvcode = await b23tv2bv(abvcode)
