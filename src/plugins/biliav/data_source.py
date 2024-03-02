@@ -1,31 +1,11 @@
 import re
-import sys
 import json
 import httpx
-import logging
-# from nonebot.log import logger
+
+from nonebot.log import logger
 from nonebot.adapters.onebot.v11 import MessageSegment
 
-
-logger = logging.getLogger("biliav")
-logger.setLevel(logging.DEBUG)
-logger.propagate = False
-
-hfh_formatter = logging.Formatter(
-    "%(asctime)s - %(module)s - %(levelname)s - %(message)s"
-)
-hfh = logging.handlers.RotatingFileHandler(
-    '../biliav.log', mode="a", maxBytes=1024 * 1024 * 8, backupCount=1
-)
-hfh.setFormatter(hfh_formatter)
-logger.addHandler(hfh)
-
-hsh_formatter = logging.Formatter(
-    "%(asctime)s [%(levelname)s] %(module)s | %(message)s"
-)
-hsh = logging.StreamHandler(sys.stdout)
-hsh.setFormatter(hsh_formatter)
-logger.addHandler(hsh)
+from .bililogger import bililogger
 
 
 HEADER = {
@@ -73,7 +53,7 @@ async def get_abv_data(abv_list: list[str]) -> list[str]:
     URL: str = 'https://api.bilibili.com/x/web-interface/view'
 
     if len(abv_list) == 0:
-        logger.warning("no abv_list")
+        bililogger.warning("no abv_list")
 
     for abvcode in abv_list:
 
@@ -81,38 +61,38 @@ async def get_abv_data(abv_list: list[str]) -> list[str]:
         abv_type = "av"
         if abvcode[0:2].lower() == "bv":
             abv_type = "bv"
-            logger.debug("bv")
+            bililogger.debug("bv")
         elif abvcode[0:2].lower() == "av":
             abv_type = "av"
             abvcode = abvcode.replace("av", "")
-            logger.debug("av")
+            bililogger.debug("av")
         elif abvcode[0:7].lower() == "b23.tv/":
             # if b_b23tv:
             abvcode = await b23tv2bv(abvcode)
             abv_type = "bv"
-            logger.debug("bv (from btv)")
+            bililogger.debug("bv (from btv)")
         else:
-            logger.error("detect av or bv error")
+            bililogger.error("detect av or bv error")
             continue
 
         # delete duplicated
         if abvcode in video_list:
-            logger.warning(f"abvcode {abvcode} detected, skipping")
+            bililogger.warning(f"abvcode {abvcode} detected, skipping")
             continue
 
         # get the data
         new_url: str = URL + (f"?bvid={abvcode}" if abv_type == "bv" else f"?aid={abvcode}")
-        logger.warning(f"start to request {new_url}")
+        bililogger.warning(f"start to request {new_url}")
         async with httpx.AsyncClient() as client:
             r = await client.get(new_url, headers=HEADER)
         rd: dict[str:str, int, dict] = json.loads(r.text)
 
         # if error
         if rd['code'] == 0 and not rd["data"]:
-            logger.error('get rd["data"] error')
+            bililogger.error('get rd["data"] error')
             continue
         elif rd['code'] != 0:
-            logger.error(f'get rd["code"] error, {rd["code"]}')
+            bililogger.error(f'get rd["code"] error, {rd["code"]}')
             continue
 
         # av code change
@@ -136,7 +116,7 @@ async def get_abv_data(abv_list: list[str]) -> list[str]:
             desc: str = rd['data']['desc']
             if len(desc) > 32: desc = desc[0:32] + "……"
 
-            logger.info(f"titled {title}")
+            bililogger.info(f"titled {title}")
             msg = f"{title}\n{author}\n" \
                 + MessageSegment.image(pic) \
                 + f"播放 {view} 弹幕 {danmaku} 评论 {reply}\n点赞 {like} 硬币 {coin} 收藏 {fav} 分享 {share}\n{link}\n简介\n{desc}"
@@ -146,6 +126,6 @@ async def get_abv_data(abv_list: list[str]) -> list[str]:
             video_list.add(abvcode[2:] if abv_type == "av" else abvcode)
 
         except Exception as e:
-            logger.error(e)
+            bililogger.error(e)
 
     return msg_list
