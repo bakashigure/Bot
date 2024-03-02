@@ -82,13 +82,15 @@ class PluginConfig:
     # should lock
     def register_plugins(self, plugin_name_dict: dict) -> None:
         """
-        plugin_name_dict: { \
-            "plugin_name": [id, default_access], \
-            "plugin_name": [id, default_access], \
-            ... \
-        } \
-        `id` is int32 number, \
-        `default_access` is true or false
+        plugin_name_dict:
+            ```python
+            {
+                "plugin_name": [id, default_access],
+                "plugin_name": [id, default_access],
+                ...
+            }
+            ```
+            `id` is an int32 number, `default_access` is `True` or `False`
         """
         while self.lock:
             time.sleep(0.5)
@@ -112,11 +114,8 @@ class PluginConfig:
 
     def parse(self, id_or_name) -> Tuple[str, int, bool]:
         """
-        [input]
-        id_or_name = str("name") or int(x)
-        
-        [output]
-        tuple = (plugin_name, plugin_id, exist_flag)
+        id_or_name: str("name") or int(x)
+        return: (plugin_name, plugin_id, exist_flag)
         """
         pid, name = None, None
         if id_or_name.isdigit() or (id_or_name[0] == '-' and id_or_name[1:].isdigit()):
@@ -180,13 +179,13 @@ class PluginConfig:
     
     def accessible(self, group_or_user_id: dict, plugin_name: str) -> Tuple[bool, bool]:
         """
-        [input]
-        group_or_user_id = { "group": None, "user": 123456 }  or  { "user": 123456 }
-                           { "group": 123456, "user": None }  or  { "group": 123456 }
-                           { "group": None, "user": None } (return False, False)
-
-        [output]
-        tuple: (accessible(True of False), is_default(True of False))
+        group_or_user_id:
+            ```python
+            { "group": None, "user": 123456 } or { "user": 123456 }  # detect user
+            { "group": 123456, "user": None } or { "group": 123456, "user": 123456 } or { "group": 123456 }  # detect group
+            { "group": None, "user": None }  # return False, False
+            ```
+        return: (accessible(True of False), is_default(True of False))
         """
         self.read()
         pid = self.get_id(plugin_name)
@@ -209,7 +208,7 @@ class PluginConfig:
                 return (self.get_default_access(plugin_name), True)
             else:
                 return (result, False)
-        if group_or_user_id.get("user", None) != None:
+        elif group_or_user_id.get("user", None) != None:
             result = str_to_tf(
                 self.user_dict.get(group_or_user_id["user"], {}).get(plugin_name, "d")
             )
@@ -217,17 +216,20 @@ class PluginConfig:
                 return (self.get_default_access(plugin_name), True)
             else:
                 return (result, False)
-        return (False, False)
+        else:
+            return (False, False)
 
     # should lock internal
     def change_access(self, group_or_user_id: dict, plugin_name: str, access: str = "d") -> None:
 
         """
-        [input]
-        group_or_user_id = { "group": None, "user": 123456 }  or  { "user": 123456 }
-                           { "group": 123456, "user": None }  or  { "group": 123456 }
-                           { "group": None, "user": None } (do nothing)
-        access = "t", "true", True, "f", "false", False, "d", "default"
+        group_or_user_id:
+            ```python
+            { "group": None, "user": 123456 } or { "user": 123456 }  # detect user
+            { "group": 123456, "user": None } or { "group": 123456, "user": 123456 } or { "group": 123456 }  # detect group
+            { "group": None, "user": None }  # do nothing
+            ```
+        access: `"t"`, `"true"`, `True`, `"f"`, `"false"`, `False`, `"d"`, `"default"`
         """
         self.read()
         pid = self.get_id(plugin_name)
@@ -258,14 +260,14 @@ class PluginConfig:
             else:
                 self.user_dict.setdefault(group_or_user_id["user"], {})[plugin_name] = access_data
             self.user_dirty = True
-        
+
         self.lock = False
 
         self.write()
 
     def show_raw(self, option: str = 'all', search_id: int = None) -> str:
         """
-        option: 'all', 'a', 'group', 'g', 'user', 'u'
+        option: `'all'`, `'a'`, `'group'`, `'g'`, `'user'`, `'u'`
         """
         self.read()
         res = ""
@@ -291,7 +293,7 @@ class PluginConfig:
 
     def show(self, option: str = 'all', search_id: int = None) -> str:
         """
-        option: 'all', 'a', 'group', 'g', 'user', 'u'
+        option: `'all'`, `'a'`, `'group'`, `'g'`, `'user'`, `'u'`
         """
         self.read()
         res = ""
