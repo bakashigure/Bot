@@ -33,11 +33,11 @@ except ImportError:
 
 config = get_driver().config
 this_plugin_name = "翻译"
-translate = on_command('自定义翻译', block=True)
-sudo_translate = on_command("翻译", aliases={"速速翻译"})
+slow_translate = on_command('自定义翻译', block=True)
+fast_translate = on_command("翻译")
 
 
-@translate.permission_updater
+@slow_translate.permission_updater
 async def _(bot: Bot, event: Event, state: T_State):
     message_type = event.message_type
     user_id = event.get_user_id()
@@ -76,22 +76,31 @@ async def getReqSign(params: dict) -> str:
     return signature
 
 
-@sudo_translate.handle()
+@fast_translate.handle()
 async def _(bot: Bot, event: Event, state: T_State):
-    event_dict = event.dict()
-    group_id: int = event_dict.get('group_id', 0)
-    state['Source'] = 'auto'
-    state['Target'] = 'zh'
+
+    # event_dict = event.dict()
+    # group_id: int = event_dict.get('group_id', 0)
     source_text = event.get_plaintext().strip()
-    source_text = re.findall('^(?:翻译|速速翻译)[:：，,\s]*(.*)', source_text)[0]
+    res_list = re.findall('^(?:翻译)\s*(zh|en|ja|ko|fr|es|it|de|tr|ru|pt|vi|id|th|ms|ar|hi|)(\s*)(.*)', source_text)[0]
+    target_language: str = res_list[0]
+    apart: str = res_list[1]
+    source_text: str = res_list[2]
+
+    if apart == '' and ('a' <= source_text[0] <= 'z'):
+        source_text = target_language + source_text
+        target_language = ''
+
+    state['Source'] = 'auto'
+    state['Target'] = target_language if target_language != '' else 'zh'
     if not source_text:
-        await sudo_translate.send(reply_text("请输入要翻译的内容", event))
+        await fast_translate.send(reply_text("请输入要翻译的内容", event))
     else:
         state['SourceText'] = source_text
-        go_trans(bot, event, state)
+        await go_trans(bot, event, state)
 
 
-@translate.handle()
+@slow_translate.handle()
 async def _(bot: Bot, event: Event, state: T_State):
     event_dict = event.dict()
     group_id: int = event_dict.get('group_id', 0)
@@ -156,12 +165,12 @@ async def _(bot: Bot, event: Event, state: T_State):
             message = ''.join([state['header'], f'{message}'])
         state['prompt'] = message
         if 'Source' not in state:
-            await translate.send(reply_text(message, event))
+            await slow_translate.send(reply_text(message, event))
     else:
         logger.warning('Not supported: translator')
         return
 
-@translate.got('Source')
+@slow_translate.got('Source')
 async def _(bot: Bot, event: Event, state: T_State):
     if isinstance(event, MessageEvent):
         available = deepcopy(state['valid'])
@@ -173,8 +182,8 @@ async def _(bot: Bot, event: Event, state: T_State):
             if 'header' in state:
                 message = ''.join([state['header'], f'{message}'])
             try:
-                await translate.send(reply_text(message, event))
-                await translate.finish()
+                await slow_translate.send(reply_text(message, event))
+                await slow_translate.finish()
             except ActionFailed as e:
                 logger.error(
                     f'ActionFailed | {e.info["msg"].lower()} | retcode = {e.info["retcode"]} | {e.info["wording"]}'
@@ -210,13 +219,13 @@ async def _(bot: Bot, event: Event, state: T_State):
         if 'header' in state:
             message = ''.join([state['header'], f'{message}'])
         state['prompt'] = message
-        await translate.send(reply_text(message, event))
+        await slow_translate.send(reply_text(message, event))
     else:
         logger.warning('Not supported: translator')
         return
 
 
-@translate.got('Target')
+@slow_translate.got('Target')
 async def _(bot: Bot, event: Event, state: T_State):
     if isinstance(event, MessageEvent):
         state['Target'] = event.dict()['raw_message']
@@ -227,8 +236,8 @@ async def _(bot: Bot, event: Event, state: T_State):
             if 'header' in state:
                 message = ''.join([state['header'], f'{message}'])
             try:
-                await translate.send(reply_text(message, event))
-                await translate.finish()
+                await slow_translate.send(reply_text(message, event))
+                await slow_translate.finish()
             except ActionFailed as e:
                 logger.error(
                     f'ActionFailed | {e.info["msg"].lower()} | retcode = {e.info["retcode"]} | {e.info["wording"]}'
@@ -238,14 +247,14 @@ async def _(bot: Bot, event: Event, state: T_State):
         if 'header' in state:
             message = ''.join([state['header'], f'{message}'])
         state['prompt'] = message
-        await translate.send(reply_text(message, event))
+        await slow_translate.send(reply_text(message, event))
     else:
         logger.warning('Not supported: translator')
         return
 
 
-@translate.got('SourceText')
-@sudo_translate.got('SourceText')
+@slow_translate.got('SourceText')
+@fast_translate.got('SourceText')
 async def go_trans(bot: Bot, event: Event, state: T_State):
     if isinstance(event, MessageEvent):
         # state['SourceText'] = event.dict()['raw_message']
@@ -268,8 +277,8 @@ async def go_trans(bot: Bot, event: Event, state: T_State):
                 if 'header' in state:
                     message = ''.join([state['header'], f'{message}'])
                 try:
-                    await translate.send(reply_text(message, event))
-                    await translate.finish()
+                    await slow_translate.send(reply_text(message, event))
+                    await slow_translate.finish()
                 except ActionFailed as e:
                     logger.error(
                         f'ActionFailed | {e.info["msg"].lower()} | retcode = {e.info["retcode"]} | {e.info["wording"]}'
@@ -284,8 +293,8 @@ async def go_trans(bot: Bot, event: Event, state: T_State):
             if 'header' in state:
                 message = ''.join([state['header'], f'{message}'])
             try:
-                await translate.send(reply_text(message, event))
-                await translate.finish()
+                await slow_translate.send(reply_text(message, event))
+                await slow_translate.finish()
             except ActionFailed as e:
                 logger.error(
                     f'ActionFailed | {e.info["msg"].lower()} | retcode = {e.info["retcode"]} | {e.info["wording"]}'
@@ -295,8 +304,8 @@ async def go_trans(bot: Bot, event: Event, state: T_State):
         if 'header' in state:
             message = ''.join([state['header'], f'{message}'])
         try:
-            await translate.send(reply_text(message, event))
-            await translate.finish()
+            await slow_translate.send(reply_text(message, event))
+            await slow_translate.finish()
         except ActionFailed as e:
             logger.error(
                 f'ActionFailed | {e.info["msg"].lower()} | retcode = {e.info["retcode"]} | {e.info["wording"]}'
