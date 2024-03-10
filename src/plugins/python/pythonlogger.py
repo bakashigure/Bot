@@ -14,9 +14,3 @@ hfh = logging.handlers.RotatingFileHandler(
 hfh.setFormatter(hfh_formatter)
 pylogger.addHandler(hfh)
 
-hsh_formatter = logging.Formatter(
-    "%(asctime)s [%(levelname)s] %(module)s | %(message)s"
-)
-hsh = logging.StreamHandler(sys.stdout)
-hsh.setFormatter(hsh_formatter)
-pylogger.addHandler(hsh)
