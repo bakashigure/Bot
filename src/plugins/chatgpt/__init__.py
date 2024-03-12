@@ -26,7 +26,7 @@ async def _(bot: Bot, event: Event):
         base_url=yaml_read['base_url']
     )
 
-    completion = client.chat.completions.create(
+    completion = await client.chat.completions.create(
         model="gpt-4",
         messages=[
             {"role": "system", "content": "You are a helpful assistant."},
