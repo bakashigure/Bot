@@ -34,5 +34,5 @@ async def _(bot: Bot, event: Event):
         ]
     )
 
-    await gpt_catcher.send(completion.choices[0].message)
+    await gpt_catcher.send(completion.choices[0].message.content)
     await gpt_catcher.finish()
