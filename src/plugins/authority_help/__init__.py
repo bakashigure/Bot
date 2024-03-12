@@ -29,6 +29,8 @@ async def _(matcher: Matcher, bot: Bot, event: Event):
     event_dict = event.dict()
     group_id = event_dict.get('group_id', None)
     user_id = event.get_user_id()
+    # raw_msg = event_dict['raw_message']
+
     group_or_user_dict = { "group": group_id, "user": user_id }
 
     logger.debug(f"Checking authority for {matcher.plugin_name}")
@@ -71,8 +73,10 @@ async def _(bot: Bot, event: MessageEvent):
     event_dict = event.dict()
     group_id = event_dict.get('group_id', None)
     user_id = event.get_user_id()
-    raw_msg = event.dict()["raw_message"]
+    raw_msg = event_dict["raw_message"]
+
     group_or_user_dict = { "group": group_id, "user": user_id }
+
     msg = parse(raw_msg, authority_locker_order)
     logger.debug(f"{msg}")
 

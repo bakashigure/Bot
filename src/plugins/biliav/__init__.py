@@ -14,9 +14,16 @@ biliav = on_regex("[Aa][Vv]\d{1,12}|[Bb][Vv]1[A-Za-z0-9]{2}4.1.7[A-Za-z0-9]{2}|[
 
 @biliav.handle()
 async def handle(bot: Bot, event: Event, state: T_State):
+
+    # event_dict = event.dict()
+    # group_id = event_dict.get('group_id', None)
+    # user_id = event.get_user_id()
+    # raw_msg = event_dict['raw_message']
+
+    raw_msg = str(event.get_message())
+
     abvcode_list: list[str] = re.compile(
-        "[Aa][Vv]\d{1,12}|[Bb][Vv]1[A-Za-z0-9]{2}4.1.7[A-Za-z0-9]{2}|[Bb]23\.[Tt][Vv]/[A-Za-z0-9]{7}").findall(
-        str(event.get_message()))
+        "[Aa][Vv]\d{1,12}|[Bb][Vv]1[A-Za-z0-9]{2}4.1.7[A-Za-z0-9]{2}|[Bb]23\.[Tt][Vv]/[A-Za-z0-9]{7}").findall(raw_msg)
     if not abvcode_list:
         return
     bililogger.debug(event.get_log_string())

@@ -41,12 +41,13 @@ def show_readme(plugin_name: str) -> str:
 @help_matcher.handle()
 async def _(bot: Bot, event: MessageEvent):
 
-    group_or_user_id = {
-        "user": event.user_id if hasattr(event, "user_id") else None,
-        "group": event.group_id if hasattr(event, "group_id") else None,
-    }
+    event_dict = event.dict()
+    group_id = event_dict.get('group_id', None)
+    user_id = event.get_user_id()
+    raw_msg = event_dict['raw_message']
 
-    raw_msg = event.dict()['raw_message']
+    group_or_user_dict = { "group": group_id, "user": user_id }
+
     content = re.findall('^(?:[hH]elp|帮助|man)[:：，,\s]*([\S]*)', raw_msg)[0]
 
     if not content:
@@ -57,18 +58,18 @@ async def _(bot: Bot, event: MessageEvent):
         msg = '可用的命令有\n\n'
         for plugin_id, plugin_name in normal_plugins.items():
             msg += '(' + str(plugin_id) + ")\t" + plugin_name + "\t" \
-                + ("已开启" if normal_plugins.accessible(group_or_user_id, plugin_name)[0] else "已关闭") + "\n"
+                + ("已开启" if normal_plugins.accessible(group_or_user_dict, plugin_name)[0] else "已关闭") + "\n"
         msg += '\n使用 `man [名称]` 获取各个命令的详细帮助'
-        msg += '\n管理者可使用 `config-modify` 直接控制开关'
+        msg += '\n作者可使用 `config-modify` 直接控制开关'
         await help_matcher.send(msg)
-    
+
     elif is_number(content):
         name = normal_plugins.get_name(int(float(content)))
         if name != None:
             await help_matcher.send(show_readme(name))
         else:
             await help_matcher.send("未找到" + content + "号命令")
-    
+
     else:
         pid = normal_plugins.get_id(content)
         if pid != None:

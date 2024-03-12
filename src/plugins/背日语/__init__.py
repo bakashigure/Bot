@@ -166,9 +166,12 @@ TA = defaultdict(TimerAns)  # 0
 @Nihongo_catcher.handle()
 async def _(bot: Bot, event: GroupMessageEvent, state: T_State):
     global is_testing_hyou, now_index, word, start, word_list
-    group_id = event.dict().get("group_id", 0)
+
     event_dict = event.dict()
+    group_id = event_dict.get('group_id', None)
     user_id = event.get_user_id()
+    raw_msg = event_dict['raw_message']
+
     is_testing_hyou[group_id] = False
     await Nihongo_catcher.send(
         reply_text("请选择题库：\n1, N1\n2, N2\n3, N3\n4, N4N5", event)
@@ -178,8 +181,12 @@ async def _(bot: Bot, event: GroupMessageEvent, state: T_State):
 @Nihongo_catcher.got("选库")
 async def get_setu(bot: Bot, event: GroupMessageEvent, state: T_State):
     global is_testing_hyou, now_index, word, start, word_list
-    group_id = event.dict().get("group_id", 0)
+
     event_dict = event.dict()
+    group_id = event_dict.get('group_id', None)
+    user_id = event.get_user_id()
+    raw_msg = event_dict['raw_message']
+
     id = int(event_dict["raw_message"].strip())
     if 1 <= id <= 4:
         get(id - 1, group_id)
@@ -235,7 +242,11 @@ ans_catcher = on_message(rule=Rule(is_ans), priority=1)
 @ans_catcher.handle()
 async def ans_handle(bot: Bot, event: GroupMessageEvent, state: T_State):
     global is_testing_hyou, now_index, word, start, word_list
-    group_id = event.dict().get("group_id", 0)
+
+    event_dict = event.dict()
+    group_id = event_dict.get('group_id', None)
+    user_id = event.get_user_id()
+    raw_msg = event_dict['raw_message']
 
     if lock[group_id] or TA[group_id].timeout:
         await ans_catcher.finish()

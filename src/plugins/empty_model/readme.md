@@ -1,12 +1,12 @@
-# plugin: chatgpt
+# plugin: your_plugin_name
 
 *可显示部分开始*
 
-> ChatGPT
+> 某某插件
 
 #### 功能
 
-- `gpt<换行>` 后加你想询问的内容
+- 使用 `your_plugin_header` 来干嘛
 
 #### 权限
 

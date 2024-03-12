@@ -13,7 +13,13 @@ python_catcher = on_regex(r"^(rust|sh|bash|python|cpp|c\+\+)\r?\n((?:.|\s)*?)$")
 @python_catcher.handle()
 async def _(bot: Bot, event: Event):
 
+    # event_dict = event.dict()
+    # group_id = event_dict.get('group_id', None)
+    # user_id = event.get_user_id()
+    # raw_msg = event_dict['raw_message']
+
     raw_msg = str(event.get_message())
+
     pylogger.debug(event.get_log_string())
     regexplist: list[str] = re.findall(r"^(rust|sh|bash|python|cpp|c\+\+)\r?\n((?:.|\s)*?)$", raw_msg)[0]
     language: str = regexplist[0]

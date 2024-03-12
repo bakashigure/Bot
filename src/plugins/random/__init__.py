@@ -15,7 +15,12 @@ dies_matcher = on_regex("^[rR]?([\d]*)[dD]([\d]+)[\s]*$")
 # 跑团专用
 @dies_matcher.handle()
 async def _(bot: Bot, event: MessageEvent):
-    raw_msg = event.dict()["raw_message"]
+
+    event_dict = event.dict()
+    group_id = event_dict.get('group_id', None)
+    user_id = event.get_user_id()
+    raw_msg = event_dict['raw_message']
+
     content_list = list(re.findall("^[rR]?([\d]*)[dD]([\d]+)[\s]*$", raw_msg))
     if len(content_list) == 0:
         await dies_matcher.finish()
@@ -50,7 +55,11 @@ async def _(bot: Bot, event: MessageEvent):
 
 @random_matcher.handle()
 async def _(bot: Bot, event: MessageEvent):
-    raw_msg = event.dict()["raw_message"]
+
+    event_dict = event.dict()
+    group_id = event_dict.get('group_id', None)
+    user_id = event.get_user_id()
+    raw_msg = event_dict['raw_message']
 
     content_list = list(
         re.findall(

@@ -1,8 +1,8 @@
-# plugin: python
+# plugin: code
 
 *可显示部分开始*
 
-> 某某插件
+> code
 
 #### 功能
 

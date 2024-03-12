@@ -12,6 +12,12 @@ your_plugin_catcher = on_regex("^今天吃什么(?:|\.|。|！|!|？|\?)*$")
 
 @your_plugin_catcher.handle()
 async def _(bot: Bot, event: Event):
+
+    # event_dict = event.dict()
+    # group_id = event_dict.get('group_id', None)
+    # user_id = event.get_user_id()
+    # raw_msg = event_dict['raw_message']
+
     recipe_dir = Path('./src/plugins/dataset/recipe')
     s = next(os.walk(recipe_dir))
     # s: [name, [dirs], [files]]

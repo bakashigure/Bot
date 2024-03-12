@@ -15,7 +15,7 @@
             "help": [1, true],
             "echo": [2, true],
             "random": [3, true],
-            "python": [4, false],
+            "code": [4, false],
             "翻译": [67, true],
             "缩写": [68, true],
             "biliav": [69, false],
@@ -29,7 +29,8 @@
             "user": "hidden_user.yaml"
         },
         "register": {
-            "戳一戳": [-1, true]
+            "戳一戳": [-1, true],
+            "chatgpt": [-2, false]
         }
     }
 }
