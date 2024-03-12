@@ -177,12 +177,12 @@ class PluginConfig:
         
         self.lock = False
     
-    def accessible(self, group_or_user_id: dict, plugin_name: str) -> Tuple[bool, bool]:
+    def accessible(self, group_or_user_dict: dict, plugin_name: str) -> Tuple[bool, bool]:
         """
-        group_or_user_id:
+        group_or_user_dict:
             ```python
-            { "group": None, "user": 123456 } or { "user": 123456 }  # detect user
-            { "group": 123456, "user": None } or { "group": 123456, "user": 123456 } or { "group": 123456 }  # detect group
+            { "group": None, "user": '123456' } or { "user": 123456 }  # detect user
+            { "group": 123456, "user": None } or { "group": '123456', "user": 123456 } or { "group": 123456 }  # detect group
             { "group": None, "user": None }  # return False, False
             ```
         return: (accessible(True of False), is_default(True of False))
@@ -200,17 +200,17 @@ class PluginConfig:
             else:
                 return "d"
 
-        if group_or_user_id.get("group", None) != None:
+        if group_or_user_dict.get("group", None) != None:
             result = str_to_tf(
-                self.group_dict.get(group_or_user_id["group"], {}).get(plugin_name, "d")
+                self.group_dict.get(int(group_or_user_dict["group"]), {}).get(plugin_name, "d")
             )
             if result == "d":
                 return (self.get_default_access(plugin_name), True)
             else:
                 return (result, False)
-        elif group_or_user_id.get("user", None) != None:
+        elif group_or_user_dict.get("user", None) != None:
             result = str_to_tf(
-                self.user_dict.get(group_or_user_id["user"], {}).get(plugin_name, "d")
+                self.user_dict.get(int(group_or_user_dict["user"]), {}).get(plugin_name, "d")
             )
             if result == "d":
                 return (self.get_default_access(plugin_name), True)
@@ -220,13 +220,13 @@ class PluginConfig:
             return (False, False)
 
     # should lock internal
-    def change_access(self, group_or_user_id: dict, plugin_name: str, access: str = "d") -> None:
+    def change_access(self, group_or_user_dict: dict, plugin_name: str, access: str = "d") -> None:
 
         """
-        group_or_user_id:
+        group_or_user_dict:
             ```python
-            { "group": None, "user": 123456 } or { "user": 123456 }  # detect user
-            { "group": 123456, "user": None } or { "group": 123456, "user": 123456 } or { "group": 123456 }  # detect group
+            { "group": None, "user": '123456' } or { "user": 123456 }  # detect user
+            { "group": 123456, "user": None } or { "group": '123456', "user": 123456 } or { "group": 123456 }  # detect group
             { "group": None, "user": None }  # do nothing
             ```
         access: `"t"`, `"true"`, `True`, `"f"`, `"false"`, `False`, `"d"`, `"default"`
@@ -248,73 +248,67 @@ class PluginConfig:
         elif access in ["f", "false", False]:
             access_data = "f"
 
-        if group_or_user_id.get("group", None) != None:
+        if group_or_user_dict.get("group", None) != None:
+            id = int(group_or_user_dict["group"])
             if access_data == "d":
-                self.group_dict.setdefault(group_or_user_id["group"], {}).pop(plugin_name, None)
+                self.group_dict.setdefault(id, {}).pop(plugin_name, None)
             else:
-                self.group_dict.setdefault(group_or_user_id["group"], {})[plugin_name] = access_data
+                self.group_dict.setdefault(id, {})[plugin_name] = access_data
             self.group_dirty = True
-        elif group_or_user_id.get("user", None) != None:
+        elif group_or_user_dict.get("user", None) != None:
+            id = int(group_or_user_dict["user"])
             if access_data == "d":
-                self.user_dict.setdefault(group_or_user_id["user"], {}).pop(plugin_name, None)
+                self.user_dict.setdefault(id, {}).pop(plugin_name, None)
             else:
-                self.user_dict.setdefault(group_or_user_id["user"], {})[plugin_name] = access_data
+                self.user_dict.setdefault(id, {})[plugin_name] = access_data
             self.user_dirty = True
 
         self.lock = False
 
         self.write()
 
-    def show_raw(self, option: str = 'all', search_id: int = None) -> str:
+    def show(self, option: str = 'all', search_id: int | str = None) -> str:
         """
         option: `'all'`, `'a'`, `'group'`, `'g'`, `'user'`, `'u'`
+        search_id: if is None, only show those have been edited
         """
         self.read()
         res = ""
         if option in ['all', 'a', 'user', 'u']:
-            res += "[user_dict]\n"
-            if search_id is not None:
-                for user_dicts in self.user_dict.items():
-                    if user_dicts[0] == search_id:
-                        res += yaml.dump({user_dicts[0]: user_dicts[1]}, allow_unicode=True) + "\n"
-                        break
-            else:
-                res += yaml.dump(self.user_dict, allow_unicode=True) + "\n"
-        if option in ['all', 'a', 'group', 'g']:
-            res += "[group_dict]\n"
-            if search_id is not None:
-                for group_dicts in self.group_dict.items():
-                    if group_dicts[0] == search_id:
-                        res += yaml.dump({group_dicts[0]: group_dicts[1]}, allow_unicode=True) + "\n"
-                        break
-            else:
-                res += yaml.dump(self.group_dict, allow_unicode=True) + "\n"
-        return res
+            if option in ['all', 'a']:
+                res += "[user_dict]\n"
 
-    def show(self, option: str = 'all', search_id: int = None) -> str:
-        """
-        option: `'all'`, `'a'`, `'group'`, `'g'`, `'user'`, `'u'`
-        """
-        self.read()
-        res = ""
-        if option in ['all', 'a', 'user', 'u']:
-            res += "[user_dict]\n"
+            # show a single id, so all default must be shown
             if search_id is not None:
+                search_id = int(search_id)
+                shown = False
                 for user_dicts in self.user_dict.items():
                     if user_dicts[0] == search_id:
-                        res += f"{user_dicts[0]}:\n"
+                        res += f"user {search_id}:\n"
                         for (plugin_name, id_and_access) in self.plugin_name_dict.items():
                             res += f"\t{plugin_name} ({id_and_access[0]}): "
-                            accessible_and_default = self.accessible({"user": user_dicts[0]}, plugin_name)
+                            accessible_and_default = self.accessible({"user": search_id}, plugin_name)
                             if accessible_and_default[1] is True:
                                 res += f"{accessible_and_default[0]} (default)\n"
                             else:
                                 res += f"{accessible_and_default[0]}\n"
                         res += "\n"
+                        shown = True
                         break
+                if not shown:
+                    res += f"user {search_id} (ALL DEFAULT):\n"
+                    for (plugin_name, id_and_access) in self.plugin_name_dict.items():
+                        res += f"\t{plugin_name} ({id_and_access[0]}): "
+                        accessible_and_default = self.accessible({"user": search_id}, plugin_name)
+                        # must be default
+                        res += f"{accessible_and_default[0]} (default)\n"
+                    res += "\n"
+                    shown = True
+
+            # show all edited, default ignored
             else:
                 for user_dicts in self.user_dict.items():
-                    res += f"{user_dicts[0]}:\n"
+                    res += f"user {user_dicts[0]}:\n"
                     for (plugin_name, id_and_access) in self.plugin_name_dict.items():
                         res += f"\t{plugin_name} ({id_and_access[0]}): "
                         accessible_and_default = self.accessible({"user": user_dicts[0]}, plugin_name)
@@ -323,24 +317,42 @@ class PluginConfig:
                         else:
                             res += f"{accessible_and_default[0]}\n"
                     res += "\n"
+
         if option in ['all', 'a', 'group', 'g']:
-            res += "[group_dict]\n"
+            if option in ['all', 'a']:
+                res += "[group_dict]\n"
+            
+            # show a single id, so all default must be shown
             if search_id is not None:
+                search_id = int(search_id)
+                shown = False
                 for group_dicts in self.group_dict.items():
                     if group_dicts[0] == search_id:
-                        res += f"{group_dicts[0]}:\n"
+                        res += f"group {search_id}:\n"
                         for (plugin_name, id_and_access) in self.plugin_name_dict.items():
                             res += f"\t{plugin_name} ({id_and_access[0]}): "
-                            accessible_and_default = self.accessible({"group": group_dicts[0]}, plugin_name)
+                            accessible_and_default = self.accessible({"group": search_id}, plugin_name)
                             if accessible_and_default[1] is True:
                                 res += f"{accessible_and_default[0]} (default)\n"
                             else:
                                 res += f"{accessible_and_default[0]}\n"
                         res += "\n"
+                        shown = True
                         break
+                if not shown:
+                    res += f"group {search_id} (ALL DEFAULT):\n"
+                    for (plugin_name, id_and_access) in self.plugin_name_dict.items():
+                        res += f"\t{plugin_name} ({id_and_access[0]}): "
+                        accessible_and_default = self.accessible({"group": search_id}, plugin_name)
+                        # must be default
+                        res += f"{accessible_and_default[0]} (default)\n"
+                    res += "\n"
+                    shown = True
+
+            # show all edited
             else:
                 for group_dicts in self.group_dict.items():
-                    res += f"{group_dicts[0]}:\n"
+                    res += f"group {group_dicts[0]}:\n"
                     for (plugin_name, id_and_access) in self.plugin_name_dict.items():
                         res += f"\t{plugin_name} ({id_and_access[0]}): "
                         accessible_and_default = self.accessible({"group": group_dicts[0]}, plugin_name)
@@ -349,6 +361,7 @@ class PluginConfig:
                         else:
                             res += f"{accessible_and_default[0]}\n"
                     res += "\n"
+
         return res
 
 """

@@ -25,10 +25,11 @@ from ..config.plugin_config import (
 
 @run_preprocessor
 async def _(matcher: Matcher, bot: Bot, event: Event):
-    group_or_user_id = {
-        "user": event.user_id if hasattr(event, "user_id") else None,
-        "group": event.group_id if hasattr(event, "group_id") else None,
-    }
+
+    event_dict = event.dict()
+    group_id = event_dict.get('group_id', None)
+    user_id = event.get_user_id()
+    group_or_user_dict = { "group": group_id, "user": user_id }
 
     logger.debug(f"Checking authority for {matcher.plugin_name}")
 
@@ -37,7 +38,7 @@ async def _(matcher: Matcher, bot: Bot, event: Event):
         allow = True
     else:
         for i_plugins in all_plugins_lists:
-            if i_plugins.accessible(group_or_user_id, matcher.plugin_name)[0]:
+            if i_plugins.accessible(group_or_user_dict, matcher.plugin_name)[0]:
                 allow = True
                 break
 
@@ -55,7 +56,7 @@ async def _(matcher: Matcher, bot: Bot, event: Event):
 # 管理员更改 normal_plugins
 # 1) 不含 hidden_plugins
 # 2) 不含设置为 default（只有开和关）
-# 3) 仅能设置本群
+# 3) 仅能设置群，不能设置私聊
 
 authority_locker_order = ("开启", "打开", "启用", "关闭", "停用", "禁用")
 
@@ -66,12 +67,12 @@ authority_locker = on_message(
 
 @authority_locker.handle()
 async def _(bot: Bot, event: MessageEvent):
-    group_or_user_id = {
-        "user": event.user_id if hasattr(event, "user_id") else None,
-        "group": event.group_id if hasattr(event, "group_id") else None,
-    }
 
+    event_dict = event.dict()
+    group_id = event_dict.get('group_id', None)
+    user_id = event.get_user_id()
     raw_msg = event.dict()["raw_message"]
+    group_or_user_dict = { "group": group_id, "user": user_id }
     msg = parse(raw_msg, authority_locker_order)
     logger.debug(f"{msg}")
 
@@ -94,7 +95,7 @@ async def _(bot: Bot, event: MessageEvent):
         "所有插件",
     ]:
         for name, _ in normal_plugins.plugin_name_dict.items():
-            normal_plugins.change_access(group_or_user_id, name, to_be_accessible)
+            normal_plugins.change_access(group_or_user_dict, name, to_be_accessible)
         await authority_locker.send("注册的功能均已" + ("开启" if to_be_accessible else "关闭"))
         await authority_locker.finish()
 
@@ -106,7 +107,7 @@ async def _(bot: Bot, event: MessageEvent):
         elif plugin_name is None:
             send_message += "找不到代号为 [" + str(plugin_id) + "] 的功能哦\n"
         else:
-            normal_plugins.change_access(group_or_user_id, plugin_name, to_be_accessible)
+            normal_plugins.change_access(group_or_user_dict, plugin_name, to_be_accessible)
             send_message += (
                 "功能 ["
                 + plugin_name
@@ -137,148 +138,190 @@ async def _(bot: Bot, event: MessageEvent):
     if not SuperUser():
         await config_modify_matcher.finish()
 
-    raw_msg = event.dict()["raw_message"]
-    msg = parse(raw_msg, config_modify_order)
-    logger.debug(f"{msg}")
+    event_dict = event.dict()
+    group_id = event_dict.get('group_id', None)
+    user_id = event.get_user_id()
+    raw_msg = event_dict["raw_message"]
 
-    arguments = msg[1:]
+    group_or_user = "user" if group_id is None else "group"
+    group_or_user_id = user_id if group_id is None else group_id
+
+    msg = parse(raw_msg, config_modify_order)
+    args = msg[1:]
+
+    logger.debug(f"{msg}")
 
     help_message = (
         "CONFIG-MODIFY MANUAL\n"
-        "(1) config-modify help\n"
-        "(2) config-modify search [u(ser)|g(roup)|a(ll) [<qq_id>]] \n"
-        "(3) config-modify update u(ser)|g(roup) <qq_id> oa|ca|da [hidden]\n"
-        "(4) config-modify update u(ser)|g(roup) <qq_id> open|close|default <plugin_name>|<plugin_id> [<plugin_name>|<plugin_id> ...]"
+        "help\n"
+        "\tconfig-modify [h(elp)]\n"
+        "search\n"
+        "\tconfig-modify s(earch)\n"
+        "\tconfig-modify s(earch) a(ll)|u(ser)|g(roup)\n"
+        "\tconfig-modify s(earch) u(ser)|g(roup) <id> [u(ser)|g(roup) <id> ...]\n"
+        "update\n"
+        "\tconfig-modify u(pdate) [u(ser)|g(roup) <id>] o(pen)|c(lose)|d(efault) a(ll) [h(idden)]\n"
+        "\tconfig-modify u(pdate) [u(ser)|g(roup) <id>] o(pen)|c(lose)|d(efault) <plugin_name>|<plugin_id> [<plugin_name>|<plugin_id> ...]"
     )
 
     not_find_message = r"config-modify 中没有 {} 选项，请参见 `config-modify help`"
     wrong_message = r"config-modify 中 {} 的使用有误，请参见 `config-modify help`"
 
+
+    def with_first_letter(*input: str):
+        res = []
+        for i in input:
+            res.append(i)
+            res.append(i[0])
+        return res
+
     def get_global_name(var) -> str:
         name = [i for i, a in globals().items() if a == var][0]
         return name
 
-    if len(arguments) == 0:
+    def ocd_to_tfd(ocd: str) -> str:
+        if ocd == "o":
+            return "t"
+        elif ocd == "c":
+            return "f"
+        else:
+            return "d"
+
+    def tfd_to_output(tfd: str) -> str:
+        if tfd == "t":
+            return "开启"
+        elif tfd == "f":
+            return "关闭"
+        else:
+            return "设为默认"
+
+
+    # config-modify [h(elp)]
+
+    if len(args) == 0:
         await config_modify_matcher.send(help_message)
         await config_modify_matcher.finish()
 
-    elif arguments[0] == "help":
+    elif args[0] in with_first_letter("help"):
         await config_modify_matcher.send(help_message)
         await config_modify_matcher.finish()
 
-    elif arguments[0] == "search":
-        if len(arguments) == 1 or (
-            (len(arguments) == 2 or (len(arguments) == 3 and arguments[2].isdigit()))
-            and arguments[1] in ["u", "user", "g", "group", "a", "all"]
-        ):
+    
+    # config-modify s(earch)
+    # config-modify s(earch) a(ll)|u(ser)|g(roup)
+    # config-modify s(earch) u(ser)|g(roup) <id> [u(ser)|g(roup) <id> ...]
+
+    elif args[0] in with_first_letter("search"):
+
+        if len(args) == 1:
             send_message = ""
             for i_plugins in all_plugins_lists:
-                send_message += "\n# " + get_global_name(i_plugins) + "\n"
-                send_message += i_plugins.show(
-                    "a" if len(arguments) == 1 else arguments[1],
-                    None if len(arguments) != 3 else int(arguments[2]),
-                )
+                send_message += "# " + get_global_name(i_plugins) + "\n"
+                send_message += i_plugins.show(group_or_user, group_or_user_id)
             await config_modify_matcher.send(send_message.strip())
             await config_modify_matcher.finish()
-        # wrong
-        else:
-            await config_modify_matcher.send(wrong_message.format(arguments[0]))
+
+        elif len(args) == 2 and args[1] in with_first_letter('all', 'user', 'group'):
+            send_message = "<only show edited>\n"
+            for i_plugins in all_plugins_lists:
+                send_message += "# " + get_global_name(i_plugins) + "\n"
+                send_message += i_plugins.show(args[1][0])
+            await config_modify_matcher.send(send_message.strip())
             await config_modify_matcher.finish()
 
-    elif arguments[0] == "update":
-        if (
-            len(arguments) >= 4
-            and arguments[1] in ["u", "user", "g", "group"]
-            and arguments[2].isdigit()
-            and (
-                (arguments[3] in ["open", "close", "default"] and len(arguments) > 4)
-                or (
-                    arguments[3] in ["oa", "ca", "da"]
-                    and (
-                        len(arguments) == 4
-                        or (len(arguments) == 5 and arguments[4] == "hidden")
-                    )
-                )
-            )
-        ):
-            group_or_user_id = {
-                "group": int(arguments[2]) if arguments[1] in ["g", "group"] else None,
-                "user": int(arguments[2]) if arguments[1] in ["u", "user"] else None,
+        else:
+            ugid_pairs: list[tuple[str, str]] = list(zip(args[1::2], args[2::2]))
+            send_message = ""
+
+            for ug, id in ugid_pairs:
+
+                if ug not in with_first_letter('user', 'group') or not id.isdigit():
+                    await config_modify_matcher.send(wrong_message.format(args[0]))
+                    await config_modify_matcher.finish()
+
+                for i_plugins in all_plugins_lists:
+                    send_message += "# " + get_global_name(i_plugins) + "\n"
+                    send_message += i_plugins.show(ug[0], id)
+
+            await config_modify_matcher.send(send_message.strip())
+            await config_modify_matcher.finish()
+
+
+    # config-modify u(pdate) [u(ser)|g(roup) <id>] o(pen)|c(lose)|d(efault) a(ll) [h(idden)]
+    # config-modify u(pdate) [u(ser)|g(roup) <id>] o(pen)|c(lose)|d(efault) <plugin_name>|<plugin_id> [<plugin_name>|<plugin_id> ...]
+
+    elif args[0] in with_first_letter("update"):
+
+        if args[1] in with_first_letter("open", "close", "default"):
+            here = True
+            group_or_user_dict = { "group": group_id, "user": user_id }
+            to_be_accessible = ocd_to_tfd(args[1][0])
+            offset = 2
+
+        elif args[1] in with_first_letter("user", "group") and args[2].isdigit():
+            here = False
+            group_or_user_dict = {
+                "group": args[2] if args[1] in with_first_letter("group") else None,
+                "user": args[2] if args[1] in with_first_letter("user") else None,
             }
+            to_be_accessible = ocd_to_tfd(args[3][0])
+            offset = 4
 
-            def ocd_to_tfd(ocd: str) -> str:
-                if ocd == "o":
-                    return "t"
-                elif ocd == "c":
-                    return "f"
-                else:
-                    return "d"
-
-            def tfd_to_output(tfd: str) -> str:
-                if tfd == "t":
-                    return "开启"
-                elif tfd == "f":
-                    return "关闭"
-                else:
-                    return "设为默认"
-
-            to_be_accessible = ocd_to_tfd(arguments[3][0])
-            if (
-                arguments[3] in ["oa", "ca", "da"]
-                and len(arguments) == 4
-                or (len(arguments) == 5 and arguments[4] == "hidden")
-            ):
-                if len(arguments) == 4:
-                    for name, _ in normal_plugins.plugin_name_dict.items():
-                        normal_plugins.change_access(
-                            group_or_user_id, name, to_be_accessible
-                        )
-                    await config_modify_matcher.send(
-                        ("群" if arguments[1] in ["g", "group"] else "用户")
-                        + f" {int(arguments[2])} 所有功能均已{tfd_to_output(to_be_accessible)}"
-                    )
-                    await config_modify_matcher.finish()
-                else:
-                    for name, _ in hidden_plugins.plugin_name_dict.items():
-                        hidden_plugins.change_access(
-                            group_or_user_id, name, to_be_accessible
-                        )
-                    await config_modify_matcher.send(
-                        ("群" if arguments[1] in ["g", "group"] else "用户")
-                        + f" {int(arguments[2])} 所有隐藏功能均已{tfd_to_output(to_be_accessible)}"
-                    )
-                    await config_modify_matcher.finish()
-            else:
-                plugin_list = arguments[4:]
-                send_message = (
-                    "群" if arguments[1] in ["g", "group"] else "用户"
-                ) + f" {int(arguments[2])}\n"
-                for single_plugin in plugin_list:
-                    hidden_prefix = ""
-                    plugin_name, plugin_id, exists = normal_plugins.parse(single_plugin)
-                    if not exists:
-                        plugin_name, plugin_id, exists = hidden_plugins.parse(single_plugin)
-                        hidden_prefix = "隐藏"
-                    if plugin_id is None:
-                        send_message += f"找不到名叫 [{plugin_name}] 的功能哦\n"
-                    elif plugin_name is None:
-                        send_message += f"找不到代号为 [{plugin_id}] 的功能哦\n"
-                    else:
-                        normal_plugins.change_access(
-                            group_or_user_id, plugin_name, to_be_accessible
-                        )
-                        hidden_plugins.change_access(
-                            group_or_user_id, plugin_name, to_be_accessible
-                        )
-                        send_message += f"{hidden_prefix}功能 [{plugin_name}] 已{tfd_to_output(to_be_accessible)}\n"
-                await config_modify_matcher.send(send_message.strip())
-                await config_modify_matcher.finish()
-        # wrong
         else:
-            await config_modify_matcher.send(wrong_message.format(arguments[0]))
+            await config_modify_matcher.send(wrong_message.format(args[0]))
             await config_modify_matcher.finish()
+
+        if args[offset + 0] in with_first_letter('all'):
+            send_message = ""
+            if not here:
+                send_message = ("群 " if args[1] in with_first_letter('group') else "用户 ") + args[2]
+            if len(args) == offset + 2 and args[offset + 1] in with_first_letter('hidden'):
+                for name, _ in hidden_plugins.plugin_name_dict.items():
+                    hidden_plugins.change_access(group_or_user_dict, name, to_be_accessible)
+                await config_modify_matcher.send(
+                    send_message + f" 所有隐藏功能均已{tfd_to_output(to_be_accessible)}"
+                )
+                await config_modify_matcher.finish()
+            elif len(args) == offset + 1:
+                for name, _ in normal_plugins.plugin_name_dict.items():
+                    normal_plugins.change_access(group_or_user_dict, name, to_be_accessible)
+                await config_modify_matcher.send(
+                    send_message + f" 所有功能均已{tfd_to_output(to_be_accessible)}"
+                )
+                await config_modify_matcher.finish()
+            else:
+                await config_modify_matcher.send(wrong_message.format(args[0]))
+                await config_modify_matcher.finish()
+
+        else:
+            plugin_list = args[offset:]
+            send_message = ""
+            if not here:
+                send_message = ("群 " if args[1] in with_first_letter('group') else "用户 ") + args[2] + '\n'
+            for single_plugin in plugin_list:
+                hidden_prefix = ""
+                plugin_name, plugin_id, exists = normal_plugins.parse(single_plugin)
+                if not exists:
+                    plugin_name, plugin_id, exists = hidden_plugins.parse(single_plugin)
+                    hidden_prefix = "隐藏"
+                if plugin_id is None:
+                    send_message += f"找不到名叫 [{plugin_name}] 的功能哦\n"
+                elif plugin_name is None:
+                    send_message += f"找不到代号为 [{plugin_id}] 的功能哦\n"
+                else:
+                    normal_plugins.change_access(
+                        group_or_user_dict, plugin_name, to_be_accessible
+                    )
+                    hidden_plugins.change_access(
+                        group_or_user_dict, plugin_name, to_be_accessible
+                    )
+                    send_message += f"{hidden_prefix}功能 [{plugin_name}] 已{tfd_to_output(to_be_accessible)}\n"
+            await config_modify_matcher.send(send_message.strip())
+            await config_modify_matcher.finish()
+
 
     # not find
+
     else:
-        await config_modify_matcher.send(not_find_message.format(arguments[0]))
+        await config_modify_matcher.send(not_find_message.format(args[0]))
         await config_modify_matcher.finish()
