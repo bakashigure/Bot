@@ -1,4 +1,4 @@
-# plugin: your_plugin_name
+# plugin: biliav
 
 *可显示部分开始*
 
@@ -15,10 +15,3 @@
 - 使用：全部
 
 *可显示部分中止*
-
-#### 结构
-
-```
-empty_model
-└── __init__.py
-```
