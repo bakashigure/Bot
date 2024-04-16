@@ -144,5 +144,6 @@ unused/
 id.yaml
 temp.*
 tmp.*
-.env.*
+.env.dev
+.env.dev.*
 !.env.dev.template
