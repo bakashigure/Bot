@@ -16,7 +16,7 @@ def run_content_in_docker(content, *, normal_timeout=2, compile_timeout=10, run_
         p = subprocess.run('sudo -S docker container prune -f', stdout=subprocess.PIPE, stderr=subprocess.STDOUT, encoding="utf-8", shell=True, timeout=normal_timeout)
         # print(p.stdout.rstrip())
 
-        p = subprocess.run(f'sudo -S docker create -it --name {name} --memory 64m --cpus 0.4 {image} bash', stdout=subprocess.PIPE, stderr=subprocess.STDOUT, encoding="utf-8", shell=True, timeout=normal_timeout)
+        p = subprocess.run(f'sudo -S docker create -it --name {name} --memory 64m --cpus 1 {image} bash', stdout=subprocess.PIPE, stderr=subprocess.STDOUT, encoding="utf-8", shell=True, timeout=normal_timeout)
         # print(p.stdout.rstrip())
 
         p = subprocess.run(f'sudo -S docker cp ./tmp.cc {name}:/root/tmp.cc', stdout=subprocess.PIPE, stderr=subprocess.STDOUT, encoding="utf-8", shell=True, timeout=normal_timeout)

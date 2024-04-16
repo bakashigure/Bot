@@ -16,6 +16,7 @@
             "echo": [2, true],
             "random": [3, true],
             "code": [4, false],
+	    "latex": [5, true],
             "翻译": [67, true],
             "缩写": [68, true],
             "biliav": [69, false],

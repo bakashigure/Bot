@@ -5,9 +5,9 @@ from nonebot import on_message, on_regex
 from nonebot.adapters.onebot.v11 import Bot, Event
 from nonebot_plugin_hammer_core.util.message_factory import reply_text
 
-from .pythonlogger import pylogger
+from .codelogger import codelogger
 
-python_catcher = on_regex(r"^(rust|sh|bash|python|cpp|c\+\+)\r?\n((?:.|\s)*?)$")
+python_catcher = on_regex(r"^(rust|sh|bash|python|cpp|c\+\+)[ \t]*\r?\n((?:.|\s)*?)$")
 
 
 @python_catcher.handle()
@@ -20,8 +20,8 @@ async def _(bot: Bot, event: Event):
 
     raw_msg = str(event.get_message())
 
-    pylogger.debug(event.get_log_string())
-    regexplist: list[str] = re.findall(r"^(rust|sh|bash|python|cpp|c\+\+)\r?\n((?:.|\s)*?)$", raw_msg)[0]
+    codelogger.debug(event.get_log_string())
+    regexplist: list[str] = re.findall(r"^(rust|sh|bash|python|cpp|c\+\+)[ \t]*\r?\n((?:.|\s)*?)$", raw_msg)[0]
     language: str = regexplist[0]
     content: str = regexplist[1]
     content = content.replace('&#91;', '[').replace('&#93;', ']').replace('&amp;', '&')
@@ -39,12 +39,12 @@ async def _(bot: Bot, event: Event):
     
     if res is not None and res != '':
         if len(res) + len(content) < 4500: # 4558:
-            pylogger.info(res)
+            codelogger.info(res)
             await python_catcher.send(reply_text(res, event))
         else:
-            pylogger.info('TooMuch')
+            codelogger.info('TooMuch')
             await python_catcher.send(reply_text("输出太多了！", event))
     else:
-        pylogger.error('None')
+        codelogger.error('None')
         await python_catcher.send(reply_text("没有输出哦", event))
     await python_catcher.finish()
