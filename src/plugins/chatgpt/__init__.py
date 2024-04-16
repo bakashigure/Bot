@@ -34,7 +34,7 @@ async def _(bot: Bot, event: Event):
     content_list = re.findall(r"^gpt(s|c|h)?[ \t]*(?:\r?\n((?:.|\s)*?))?$", raw_msg)[0]
     content = content_list[1].strip()
 
-    gptlogger.info("get message\n" + content_list[0] + "\n" + content)
+    gptlogger.info("get message\n" + str(event) + "\nmethod (s|c|h|nothing): " + content_list[0] + "\n" + content)
 
     if content_list[0] == "h":
         await gpt_catcher.send("gpth: 显示帮助\ngpt<换行>内容: 不使用历史记录\ngpts<换行>内容: 使用历史记录\ngptc<换行>内容: 清空历史且不使用历史记录\n")
@@ -97,6 +97,6 @@ async def _(bot: Bot, event: Event):
     history[guid] += name_prefix + content + "\n\n\n" + result + "\n\n\n"
     history[guid] = history[guid][-2000:]
 
-    gptlogger.info(str(event) + history_prefix + result)
+    gptlogger.info(str(event) + "\n" + history_prefix + result)
     await gpt_catcher.send(reply_text(history_prefix + result, event))
     await gpt_catcher.finish()
