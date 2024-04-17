@@ -1,8 +1,8 @@
 import re
 import json
 import httpx
+import traceback
 
-from nonebot.log import logger
 from nonebot.adapters.onebot.v11 import MessageSegment
 
 from .bililogger import bililogger
@@ -61,38 +61,43 @@ async def get_abv_data(abv_list: list[str]) -> list[str]:
         abv_type = "av"
         if abvcode[0:2].lower() == "bv":
             abv_type = "bv"
-            bililogger.debug("bv")
+            bililogger.info(f"deal with bv: {abvcode}")
         elif abvcode[0:2].lower() == "av":
             abv_type = "av"
             abvcode = abvcode.replace("av", "")
-            bililogger.debug("av")
+            bililogger.info(f"deal with av: {abvcode}")
         elif abvcode[0:7].lower() == "b23.tv/":
             # if b_b23tv:
             abvcode = await b23tv2bv(abvcode)
             abv_type = "bv"
-            bililogger.debug("bv (from btv)")
+            bililogger.info(f"deal with bv from btv: {abvcode}")
         else:
-            bililogger.error("detect av or bv error")
+            bililogger.error(f"deal abv error: {abvcode}")
             continue
 
         # delete duplicated
         if abvcode in video_list:
-            bililogger.warning(f"abvcode {abvcode} detected, skipping")
+            bililogger.warning(f"abvcode {abvcode} detected before, skipping")
             continue
 
         # get the data
         new_url: str = URL + (f"?bvid={abvcode}" if abv_type == "bv" else f"?aid={abvcode}")
-        bililogger.warning(f"start to request {new_url}")
-        async with httpx.AsyncClient() as client:
-            r = await client.get(new_url, headers=HEADER)
-        rd: dict[str:str, int, dict] = json.loads(r.text)
+        bililogger.info(f"start to request {new_url}")
+        try:
+            async with httpx.AsyncClient() as client:
+                r = await client.get(new_url, headers=HEADER)
+            rd: dict[str:str, int, dict] = json.loads(r.text)
+        except Exception as e:
+            bililogger.error(str(e))
+            bililogger.error(str(traceback.format_exc()))
+            continue
 
         # if error
         if rd['code'] == 0 and not rd["data"]:
             bililogger.error('get rd["data"] error')
             continue
         elif rd['code'] != 0:
-            bililogger.error(f'get rd["code"] error, {rd["code"]}')
+            bililogger.error(f'get rd["code"] error: {rd["code"]}')
             continue
 
         # av code change
@@ -116,7 +121,12 @@ async def get_abv_data(abv_list: list[str]) -> list[str]:
             desc: str = rd['data']['desc']
             if len(desc) > 32: desc = desc[0:32] + "……"
 
-            bililogger.info(f"titled {title}")
+            # pic = "xxxxxx(normal_url)xxxxxxxx,type=,cache=true,proxy=true,timeout="
+            if "," in pic:
+                bililogger.warning(f"find url need to strip tail: {pic=}")
+                pic = pic.split(",", 1)[0]
+                bililogger.warning(f"tail stripped: {pic=}")
+
             msg = f"{title}\n{author}\n" \
                 + MessageSegment.image(pic) \
                 + f"播放 {view} 弹幕 {danmaku} 评论 {reply}\n点赞 {like} 硬币 {coin} 收藏 {fav} 分享 {share}\n{link}\n简介\n{desc}"
@@ -125,7 +135,11 @@ async def get_abv_data(abv_list: list[str]) -> list[str]:
             # delete duplicated
             video_list.add(abvcode[2:] if abv_type == "av" else abvcode)
 
+            bililogger.info(f"send messsage (short)\n{title=}\n{author=}\n{pic=}")
+
         except Exception as e:
             bililogger.error(e)
+            bililogger.error(str(traceback.format_exc()))
+            continue
 
     return msg_list

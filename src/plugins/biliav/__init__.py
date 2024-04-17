@@ -26,12 +26,16 @@ async def handle(bot: Bot, event: Event, state: T_State):
         "[Aa][Vv]\d{1,12}|[Bb][Vv]1[A-Za-z0-9]{2}4.1.7[A-Za-z0-9]{2}|[Bb]23\.[Tt][Vv]/[A-Za-z0-9]{7}").findall(raw_msg)
     if not abvcode_list:
         return
-    bililogger.debug(event.get_log_string())
+
     logger.debug("start matching biliav")
+
+    bililogger.info("get message\n" + event.get_log_string())
     rj_list: list[str] = await get_abv_data(abvcode_list)
     for rj in rj_list:
         await biliav.send(rj)
     if len(rj_list) == 0:
-        logger.debug("no data in biliav")
+        bililogger.warning("no data in biliav")
+
     logger.debug("stop sending biliav")
+
     await biliav.finish()

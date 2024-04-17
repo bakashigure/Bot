@@ -20,7 +20,7 @@ async def _(bot: Bot, event: Event):
 
     raw_msg = str(event.get_message())
 
-    codelogger.debug(event.get_log_string())
+    codelogger.info("get message\n" + event.get_log_string())
     regexplist: list[str] = re.findall(r"^(rust|sh|bash|python|cpp|c\+\+)[ \t]*\r?\n((?:.|\s)*?)$", raw_msg)[0]
     language: str = regexplist[0]
     content: str = regexplist[1]
@@ -39,12 +39,13 @@ async def _(bot: Bot, event: Event):
     
     if res is not None and res != '':
         if len(res) + len(content) < 4500: # 4558:
-            codelogger.info(res)
+            codelogger.info("send message\n" + res)
             await python_catcher.send(reply_text(res, event))
         else:
-            codelogger.info('TooMuch')
+            codelogger.info("send message\n" + 'TooMuch')
             await python_catcher.send(reply_text("输出太多了！", event))
     else:
-        codelogger.error('None')
+        codelogger.info("send message\n" + 'None')
         await python_catcher.send(reply_text("没有输出哦", event))
+
     await python_catcher.finish()
