@@ -2,6 +2,7 @@ import re
 import json
 import httpx
 import traceback
+import base64
 
 from nonebot.adapters.onebot.v11 import Message, MessageSegment
 
@@ -121,8 +122,13 @@ async def get_abv_data(abv_list: list[str]) -> list[str]:
             desc: str = rd['data']['desc']
             if len(desc) > 32: desc = desc[0:32] + "……"
 
+            async with httpx.AsyncClient(timeout=10) as client:
+                r = await client.get(pic, headers=HEADER)
+                base64_data = "base64://" + base64.b64encode(r.content).decode()
+            bililogger.info(f"image base64\nlen = {len(base64_data)}")
+
             msg = f"{title}\n{author}\n" \
-                + MessageSegment.image(pic) \
+                + MessageSegment.image(base64_data) \
                 + f"播放 {view} 弹幕 {danmaku} 评论 {reply}\n点赞 {like} 硬币 {coin} 收藏 {fav} 分享 {share}\n{link}\n简介\n{desc}"
             msg_list.append(msg)
 
