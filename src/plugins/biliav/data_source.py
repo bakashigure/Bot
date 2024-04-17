@@ -3,7 +3,7 @@ import json
 import httpx
 import traceback
 
-from nonebot.adapters.onebot.v11 import MessageSegment
+from nonebot.adapters.onebot.v11 import Message, MessageSegment
 
 from .bililogger import bililogger
 
@@ -15,7 +15,7 @@ HEADER = {
 }
 
 async def b23tv2bv(b23tv: str) -> str:
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(timeout=10) as client:
         r = await client.get('https://' + b23tv, headers=HEADER)
     return re.findall("[Bb][Vv]1[A-Za-z0-9]{2}4.1.7[A-Za-z0-9]{2}", str(r.next_request.url))[0]
 
@@ -84,7 +84,7 @@ async def get_abv_data(abv_list: list[str]) -> list[str]:
         new_url: str = URL + (f"?bvid={abvcode}" if abv_type == "bv" else f"?aid={abvcode}")
         bililogger.info(f"start to request {new_url}")
         try:
-            async with httpx.AsyncClient() as client:
+            async with httpx.AsyncClient(timeout=10) as client:
                 r = await client.get(new_url, headers=HEADER)
             rd: dict[str:str, int, dict] = json.loads(r.text)
         except Exception as e:
@@ -120,12 +120,6 @@ async def get_abv_data(abv_list: list[str]) -> list[str]:
             link: str = f"https://www.bilibili.com/video/{abvcode}"
             desc: str = rd['data']['desc']
             if len(desc) > 32: desc = desc[0:32] + "……"
-
-            # pic = "xxxxxx(normal_url)xxxxxxxx,type=,cache=true,proxy=true,timeout="
-            if "," in pic:
-                bililogger.warning(f"find url need to strip tail: {pic=}")
-                pic = pic.split(",", 1)[0]
-                bililogger.warning(f"tail stripped: {pic=}")
 
             msg = f"{title}\n{author}\n" \
                 + MessageSegment.image(pic) \
