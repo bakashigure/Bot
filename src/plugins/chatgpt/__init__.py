@@ -74,24 +74,30 @@ async def _(bot: Bot, event: Event):
         base_url=yaml_read['base_url']
     )
     
-    if history_used:
+    try:
+        if history_used:
 
-        completion = await client.chat.completions.create(
-            model="gpt-4-1106-preview",
-            messages=[
-                {"role": "system", "content": "" + ("You are now talking with many people." if group_id is not None else "")},
-                {"role": "user", "content": "history message (may be cut):\n\n" + history[guid] + "\n\ncurrent message:\n\n" + name_prefix + content}
-            ]
-        )
+            completion = await client.chat.completions.create(
+                model="gpt-4-1106-preview",
+                messages=[
+                    {"role": "system", "content": "" + ("You are now talking with many people." if group_id is not None else "")},
+                    {"role": "user", "content": "history message (may be cut):\n\n" + history[guid] + "\n\ncurrent message:\n\n" + name_prefix + content}
+                ]
+            )
 
-    else:
+        else:
 
-        completion = await client.chat.completions.create(
-            model="gpt-4-1106-preview",
-            messages=[
-                {"role": "user", "content": content}
-            ]
-        )
+            completion = await client.chat.completions.create(
+                model="gpt-4-1106-preview",
+                messages=[
+                    {"role": "user", "content": content}
+                ]
+            )
+
+    except Exception as e:
+        gptlogger.error("send message to\n" + event.get_log_string() + "\n" + str(e))
+        await gpt_catcher.send(reply_text(f"网络不畅，请稍后重试。\n错误内容: {e}", event))
+        await gpt_catcher.finish()
 
     result = completion.choices[0].message.content
     history[guid] += name_prefix + content + "\n\n\n" + result + "\n\n\n"
