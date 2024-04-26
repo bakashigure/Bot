@@ -40,7 +40,7 @@ nonebot==1.9.1
 nonebot-adapter-onebot==2.2.2
 nonebot-plugin-apscheduler==0.2.0
 nonebot-plugin-hammer-core==0.3.1
-nonebot2==2.0.0rc4
+nonebot2==2.2.0
 numpy==1.24.2
 onnxruntime==1.14.1
 opencv-python-headless==4.7.0.72
