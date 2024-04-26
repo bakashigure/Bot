@@ -80,6 +80,6 @@ uvloop==0.17.0
 watchfiles==0.19.0
 webdriver-manager==3.8.6
 websockets==11.0.1
-Werkzeug==2.2.3
+Werkzeug==2.3.8
 wsproto==1.2.0
 yarl==1.8.2
