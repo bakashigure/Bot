@@ -1,5 +1,7 @@
 import re
 import yaml
+import httpx
+import traceback
 from openai import AsyncOpenAI
 from nonebot.log import logger
 from nonebot.rule import startswith
@@ -71,7 +73,8 @@ async def _(bot: Bot, event: Event):
 
     client = AsyncOpenAI(
         api_key=yaml_read['api_key'],
-        base_url=yaml_read['base_url']
+        base_url=yaml_read['base_url'],
+        timeout=httpx.Timeout(120.0)
     )
     
     try:
@@ -82,7 +85,7 @@ async def _(bot: Bot, event: Event):
                 messages=[
                     {"role": "system", "content": "" + ("You are now talking with many people." if group_id is not None else "")},
                     {"role": "user", "content": "history message (may be cut):\n\n" + history[guid] + "\n\ncurrent message:\n\n" + name_prefix + content}
-                ]
+                ],
             )
 
         else:
@@ -91,11 +94,11 @@ async def _(bot: Bot, event: Event):
                 model="gpt-4-1106-preview",
                 messages=[
                     {"role": "user", "content": content}
-                ]
+                ],
             )
 
     except Exception as e:
-        gptlogger.error("send message to\n" + event.get_log_string() + "\n" + str(e))
+        gptlogger.error("send message to\n" + event.get_log_string() + "\n" + str(e) + "\n" + traceback.format_exc())
         await gpt_catcher.send(reply_text(f"网络不畅，请稍后重试。\n错误内容: {e}", event))
         await gpt_catcher.finish()
 
