@@ -46,7 +46,7 @@ onnxruntime==1.14.1
 opencv-python-headless==4.7.0.72
 outcome==1.2.0
 packaging==23.1
-Pillow==9.5.0
+Pillow==10.3.0
 pipx==1.2.0
 priority==2.0.0
 protobuf==4.22.3
