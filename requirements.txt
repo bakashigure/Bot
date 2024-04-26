@@ -28,7 +28,7 @@ httpx==0.24.0
 humanfriendly==10.0
 hypercorn==0.14.3
 hyperframe==6.0.1
-idna==3.4
+idna==3.7
 itsdangerous==2.1.2
 Jinja2==3.1.2
 loguru==0.6.0
