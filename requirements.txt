@@ -73,7 +73,7 @@ trio-websocket==0.10.2
 typing_extensions==4.5.0
 tzdata==2023.3
 tzlocal==4.3
-urllib3==1.26.15
+urllib3==1.26.18
 userpath==1.8.0
 uvicorn==0.21.1
 uvloop==0.17.0
