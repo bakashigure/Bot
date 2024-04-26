@@ -50,7 +50,7 @@ Pillow==9.5.0
 pipx==1.2.0
 priority==2.0.0
 protobuf==4.22.3
-pydantic==1.10.7
+pydantic==1.10.13
 pygtrie==2.5.0
 PySocks==1.7.1
 python-dotenv==1.0.0
