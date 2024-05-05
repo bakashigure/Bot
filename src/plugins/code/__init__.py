@@ -21,18 +21,18 @@ async def _(bot: Bot, event: Event):
     raw_msg = str(event.get_message())
 
     codelogger.info("get message\n" + event.get_log_string())
-    regexplist: list[str] = re.findall(r"^(rust|sh|bash|python|cpp|c\+\+)[ \t]*\r?\n((?:.|\s)*?)$", raw_msg)[0]
+    regexplist: list[str] = re.findall(r"^(rs|rust|sh|bash|py|python|c|cc|cpp|c\+\+)[ \t]*\r?\n((?:.|\s)*?)$", raw_msg)[0]
     language: str = regexplist[0]
     content: str = regexplist[1]
     content = content.replace('&#91;', '[').replace('&#93;', ']').replace('&amp;', '&')
 
-    if language in ["python"]:
+    if language in ["python", "py"]:
         from .pyrun import run_content_in_docker
-    elif language in ["c++", "cpp"]:
+    elif language in ["c++", "cpp", "cc", "c"]:
         from .cpprun import run_content_in_docker
     elif language in ["bash", "sh"]:
         from .shrun import run_content_in_docker
-    elif language in ["rust"]:
+    elif language in ["rust", "rs"]:
         from .rustrun import run_content_in_docker
 
     res = run_content_in_docker(content)
