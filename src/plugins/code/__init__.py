@@ -7,7 +7,8 @@ from nonebot_plugin_hammer_core.util.message_factory import reply_text
 
 from .codelogger import codelogger
 
-python_catcher = on_regex(r"^(rust|sh|bash|python|cpp|c\+\+)[ \t]*\r?\n((?:.|\s)*?)$")
+regex_str = r"^(rs|rust|sh|bash|py|python|c|cc|cpp|c\+\+)[ \t]*\r?\n((?:.|\s)*?)$";
+python_catcher = on_regex(regex_str)
 
 
 @python_catcher.handle()
@@ -21,7 +22,7 @@ async def _(bot: Bot, event: Event):
     raw_msg = str(event.get_message())
 
     codelogger.info("get message\n" + event.get_log_string())
-    regexplist: list[str] = re.findall(r"^(rs|rust|sh|bash|py|python|c|cc|cpp|c\+\+)[ \t]*\r?\n((?:.|\s)*?)$", raw_msg)[0]
+    regexplist: list[str] = re.findall(regex_str, raw_msg)[0]
     language: str = regexplist[0]
     content: str = regexplist[1]
     content = content.replace('&#91;', '[').replace('&#93;', ']').replace('&amp;', '&')
