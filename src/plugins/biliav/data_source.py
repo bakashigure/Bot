@@ -18,7 +18,10 @@ HEADER = {
 async def b23tv2bv(b23tv: str) -> str:
     async with httpx.AsyncClient(timeout=10) as client:
         r = await client.get('https://' + b23tv, headers=HEADER)
-    return re.findall("[Bb][Vv]1[A-Za-z0-9]{2}4.1.7[A-Za-z0-9]{2}", str(r.next_request.url))[0]
+    s = re.findall("[Bb][Vv]1[A-Za-z0-9]{2}4.1.7[A-Za-z0-9]{2}", str(r.next_request.url)) 
+    if len(s) < 1:
+        return None
+    return s[0]
 
 
 """
@@ -69,7 +72,11 @@ async def get_abv_data(abv_list: list[str]) -> list[str]:
             bililogger.info(f"deal with av: {abvcode}")
         elif abvcode[0:7].lower() == "b23.tv/":
             # if b_b23tv:
+            old_abvcode = abvcode
             abvcode = await b23tv2bv(abvcode)
+            if abvcode is None:
+                bililogger.error(f"deal b23tv2bv error: {old_abvcode}")
+                continue
             abv_type = "bv"
             bililogger.info(f"deal with bv from btv: {abvcode}")
         else:
