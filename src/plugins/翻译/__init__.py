@@ -82,7 +82,7 @@ async def _(bot: Bot, event: Event, state: T_State):
     # event_dict = event.dict()
     # group_id: int = event_dict.get('group_id', 0)
     source_text = event.get_plaintext().strip()
-    res_list = re.findall('^(?:翻译)\s*(zh|en|ja|ko|fr|es|it|de|tr|ru|pt|vi|id|th|ms|ar|hi|)(\s*)(.*)', source_text)[0]
+    res_list = re.findall('^(?:翻译)\s*(zh|en|ja|ko|fr|es|it|de|tr|ru|pt|vi|id|th|ms|ar|hi|)(\s*)([\s\S]*)', source_text)[0]
     target_language: str = res_list[0]
     apart: str = res_list[1]
     source_text: str = res_list[2]
