@@ -77,7 +77,7 @@ async def _(bot: Bot, event: Event):
         timeout=httpx.Timeout(120.0)
     )
 
-    model_name = "gpt-4-turbo-2024-04-09"
+    model_name = "gpt-4o"
     
     try:
         if history_used:
