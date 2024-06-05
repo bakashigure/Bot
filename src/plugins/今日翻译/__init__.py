@@ -47,7 +47,7 @@ async def _(bot: Bot, event: Event):
 
     today = datetime.date.today()
     today_dict.setdefault(content, (0, ""))
-    if today_dict[content][0] != today:
+    if today_dict[content][0] != today or today_dict[content][1] == "":
         today_dict[content] = (today, get_random("./src/plugins/dataset/context/" + content + ".txt"))
     res = today_dict[content][1]
 
