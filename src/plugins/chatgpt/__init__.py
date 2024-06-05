@@ -11,7 +11,8 @@ from nonebot_plugin_hammer_core.util.message_factory import reply_text
 
 from .gptlogger import gptlogger
 
-gpt_catcher = on_regex(r"^gpt(s|c|h)?[ \t]*(?:\r?\n((?:.|\s)*?))?$")
+reg = r"^gpt(s|c|h)?[ \t]*(?:\r?\n((?:.|\s)*?))?$"
+gpt_catcher = on_regex(reg)
 
 with open("./src/plugins/chatgpt/gpt.yaml", 'r', encoding='utf-8') as file:
     yaml_read = yaml.safe_load(file.read())
@@ -33,7 +34,7 @@ async def _(bot: Bot, event: Event):
 
     history.setdefault(guid, '')
 
-    content_list = re.findall(r"^gpt(s|c|h)?[ \t]*(?:\r?\n((?:.|\s)*?))?$", raw_msg)[0]
+    content_list = re.findall(reg, raw_msg)[0]
     content = content_list[1].strip()
 
     gptlogger.info("get message\n" + event.get_log_string() + "\nmethod (s|c|h|nothing): " + content_list[0])

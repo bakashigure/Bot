@@ -10,7 +10,8 @@ from nonebot.params import T_State
 from .bililogger import bililogger
 from .data_source import get_abv_data
 
-biliav = on_regex("[Aa][Vv]\d{1,12}|[Bb][Vv]1[A-Za-z0-9]{2}4.1.7[A-Za-z0-9]{2}|[Bb]23\.[Tt][Vv]/[A-Za-z0-9]{7}")
+reg = "[Aa][Vv]\d{1,12}|[Bb][Vv]1[A-Za-z0-9]{2}4.1.7[A-Za-z0-9]{2}|[Bb]23\.[Tt][Vv]/[A-Za-z0-9]{7}"
+biliav = on_regex(reg)
 
 @biliav.handle()
 async def handle(bot: Bot, event: Event, state: T_State):
@@ -22,8 +23,7 @@ async def handle(bot: Bot, event: Event, state: T_State):
 
     raw_msg = str(event.get_message())
 
-    abvcode_list: list[str] = re.compile(
-        "[Aa][Vv]\d{1,12}|[Bb][Vv]1[A-Za-z0-9]{2}4.1.7[A-Za-z0-9]{2}|[Bb]23\.[Tt][Vv]/[A-Za-z0-9]{7}").findall(raw_msg)
+    abvcode_list: list[str] = re.compile(reg).findall(raw_msg)
     if not abvcode_list:
         return
 

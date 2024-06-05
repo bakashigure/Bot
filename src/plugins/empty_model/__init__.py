@@ -5,7 +5,8 @@ from nonebot import on_message, on_regex
 from nonebot.adapters.onebot.v11 import Bot, Event
 
 your_plugin_catcher = on_message(rule=startswith(("开头内容 第一种用以测试一般不会触发#$%", "开头内容 第二种用以测试一般不会触发#$%")))
-# your_plugin_catcher = on_regex("^(?:开头内容)[:：，,\s]*(-?[\S]*)[:：，,\s]*(-?[\S]*)[\s]*$")
+reg = "^(?:开头内容)[:：，,\s]*(-?[\S]*)[:：，,\s]*(-?[\S]*)[\s]*$"
+# your_plugin_catcher = on_regex(reg)
 
 @your_plugin_catcher.handle()
 async def _(bot: Bot, event: Event):
@@ -17,7 +18,9 @@ async def _(bot: Bot, event: Event):
 
     raw_msg = str(event.get_message())
 
-    content = re.findall('^(?:开头内容)[:：，,\s]*(-?[\S]*)[:：，,\s]*(-?[\S]*)[\s]*$', raw_msg)
+    content_list = re.findall(reg, raw_msg)[0]  # add [0] if multiple capture() in reg, otherwise do not!
+    content = content_list[0].strip()
+
     reply = f'哈哈这是{content}'
     await your_plugin_catcher.send(reply)
     await your_plugin_catcher.finish()

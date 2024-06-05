@@ -1,12 +1,12 @@
-# plugin: your_plugin_name
+# plugin: 今日翻译
 
 *可显示部分开始*
 
-> 某某插件
+> 翻译文本插件
 
 #### 功能
 
-- 使用 `your_plugin_header` 来干嘛
+- 使用 `#今日翻译 <语种>` 来提供翻译文本
 
 #### 权限
 
