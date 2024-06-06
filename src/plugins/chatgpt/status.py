@@ -12,5 +12,5 @@ def get_status(date, group):
         s = re.findall(log, data)
         result = Counter(s)
     
-    return result
+    return str(result).removeprefix("Counter({").removesuffix("})")
 
