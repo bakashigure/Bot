@@ -8,10 +8,18 @@ from nonebot.rule import startswith
 from nonebot import on_message, on_regex
 from nonebot.adapters.onebot.v11 import Bot, Event
 from nonebot_plugin_hammer_core.util.message_factory import reply_text
+from datetime import datetime
+from dateutil.relativedelta import relativedelta
 
 from .gptlogger import gptlogger
+from .status import get_status
 
-reg = r"^gpt(s|c|h)?[ \t]*(?:\r?\n((?:.|\s)*?))?$"
+def get_last_month_date():
+    today = datetime.today()
+    last_month_date = today - relativedelta(months=1)
+    return last_month_date
+
+reg = r"^gpt(s|c|h|g)?[ \t]*(?:\r?\n((?:.|\s)*?))?$"
 gpt_catcher = on_regex(reg)
 
 with open("./src/plugins/chatgpt/gpt.yaml", 'r', encoding='utf-8') as file:
@@ -40,8 +48,12 @@ async def _(bot: Bot, event: Event):
     gptlogger.info("get message\n" + event.get_log_string() + "\nmethod (s|c|h|nothing): " + content_list[0])
 
     if content_list[0] == "h":
-        await gpt_catcher.send("gpth: 显示帮助\ngpt<换行>内容: 不使用历史记录\ngpts<换行>内容: 使用历史记录\ngptc<换行>内容: 清空历史且不使用历史记录\n")
+        await gpt_catcher.send("gpth: 显示帮助\ngpt<换行>内容: 不使用历史记录\ngpts<换行>内容: 使用历史记录\ngptc<换行>内容: 清空历史且不使用历史记录\ngptg: 显示本群用量")
 
+    if content_list[0] == "g" and group_id is not None:
+        res1 = get_status(datetime.today().strftime('%Y-%m'), str(group_id))
+        res2 = get_status(get_last_month_date().strftime('%Y-%m'), str(group_id))
+        await gpt_catcher.send(f"本月用量: {res1}\n上月用量: {res2}")
 
     if content == "":
 
