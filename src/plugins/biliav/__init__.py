@@ -21,7 +21,7 @@ async def handle(bot: Bot, event: Event, state: T_State):
     # user_id = event.get_user_id()
     # raw_msg = event_dict['raw_message']
 
-    raw_msg = str(event.get_message())
+    raw_msg = event.get_plaintext()
 
     abvcode_list: list[str] = re.compile(reg).findall(raw_msg)
     if not abvcode_list:
